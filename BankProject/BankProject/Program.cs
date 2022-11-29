@@ -1,165 +1,248 @@
-﻿using System.IO;
-using BankProject; //to access the objects from the AppDataContext.cs
-using System.Security.Cryptography; //to use the SHA method
-using System.Text;
-using static System.Console;
-using Microsoft.IdentityModel.Tokens;
+﻿using System.Dynamic;
 
-namespace BankProject;
-class Program
+namespace BankProject
 {
-    static void Main(string[] args)
+    internal class Program
     {
-        RunLoginSignUp();
-    }
+        static BankAccount[] bankAccounts = { new BankAccount("maria", "1234", 100, 0), new BankAccount("pedro", "1234", 0, 0), new BankAccount("kalle", "1234", 0, 0), new BankAccount("johan", "1234", 0, 0), new BankAccount("matias", "1234", 0, 0) };
 
-    static void RunLoginSignUp()
-    {
-        //Clear();
-        string welcome = "\n\tWelcome to the Bank XXXX!\n";
-
-        bool runMenu = true;
-        while (runMenu)
+        //to get bank account
+        static int GetAccountByUser(string? user)
         {
-            Console.WriteLine(welcome.ToUpper());
-            Console.WriteLine("\tPlease select one of the options below:");
-            Console.WriteLine("\n\t1. Login\n" +
-                "\n\t2. Sign Up\n");
-            Console.Write("\t Select menu: ");
-            int menuChoice;
-            int.TryParse(Console.ReadLine(), out menuChoice);
-
-            switch (menuChoice)
+            for (int i = 0; i < bankAccounts.Length; i++)
             {
-                case 1:
-                    LoginSystem();
-                    break;
-                case 2:
-                    SignUpSystem();
-                    break;
-                default:
-                    Console.ForegroundColor = ConsoleColor.DarkRed;
-                    Console.WriteLine("\n\tChoose 1-2 from the menu\n");
-                    Console.ResetColor();
-                    break;
+                if (bankAccounts[i].User == user)
+                {
+                    return i;
+                }
             }
+
+            return -1; //false
         }
-    }
 
-    static void LoginSystem()
-    {
-        Clear();
-        WriteLine("===========LOGIN===========");
-        Console.Write("\nEnter a username: ");
-        string? userName = Console.ReadLine();
-        Console.Write("\nEnter a pin code: ");
-        string? password = Console.ReadLine();
 
-        //set-map the user to DB
-        using AppDataContext context = new AppDataContext(); //create new instance
-
-        //to check user in db
-        var userFound = context.Users.Any(user => user.Name == userName); //to return a bool
-
-        if (userFound)
+        static void Main(string[] args)
         {
-            var loginUser = context.Users.FirstOrDefault(user => user.Name == userName); //to access an get/return the 1st user with the name
+            RunLogin();
+        }
 
-            if (password != null && loginUser != null)
+        static void RunLogin()
+        {
+            Console.WriteLine("Welcome");
+            Console.Write("User: ");
+            string? user = Console.ReadLine();
+            Console.Write("Password: ");
+            string? password = Console.ReadLine();
+
+            int accountIndex = GetAccountByUser(user); //get user index
+            bool accountFound = accountIndex != -1;
+            if (accountFound)
             {
-                //if the user pass is the same as stored
-                if (HashPassword($"{password}{loginUser.Salt}") == loginUser.Password)
+                if (bankAccounts[accountIndex].Password == password)
                 {
-                    Clear();
-                    ForegroundColor = ConsoleColor.DarkGreen;
-                    Console.WriteLine("Login Sucessful");
-                    Console.ResetColor();
-                    Console.WriteLine("click enter to return to menu");
-                    ReadLine();
+                    bool runLoginMenu = true;
+                    while (runLoginMenu)
+                    {
+                        string welcome1 = "Welcome to your account";
+                        Console.WriteLine(welcome1.ToUpper());
+                        Console.WriteLine("\tPlease select one of the options below:");
+                        Console.WriteLine("\n\t1. View Accounts and Balance\n" +
+                            "\n\t2. Deposit\n" +
+                            "\n\t3. Transfer Between Accounts\n" +
+                            "\n\t4. Withdraw Money\n" +
+                            "\n\t5. Log Out\n");
+                        Console.Write("\t Select menu: ");
+                        int menuChoice;
+                        int.TryParse(Console.ReadLine(), out menuChoice);
+
+                        switch (menuChoice)
+                        {
+                            case 1:
+                                ViewAccountsAndBalance(accountIndex);
+                                break;
+                            case 2:
+                                Deposit(accountIndex);
+                                break;
+                            case 3:
+                                TransferBtwAccounts(accountIndex);
+                                break;
+                            case 4:
+                                WithdrawMoney(accountIndex);
+                                break;
+                            case 5:
+                                Console.WriteLine("\n\tThanks for your visit!");
+                                Thread.Sleep(1000);
+                                runLoginMenu = false;
+                                break;
+                            default:
+                                Console.Clear();
+                                Console.ForegroundColor = ConsoleColor.DarkRed;
+                                Console.WriteLine("\n\tInvlid selection! " +
+                                    "Please, choose 1-5 from the menu\n");
+                                Console.ResetColor();
+                                Console.WriteLine("\n\tclick enter to return to the menu\n");
+                                Console.ReadLine();
+                                break;
+                        }
+                    }
                 }
-                else
-                {
-                    InvalidLogin();
-                }
-                Clear();
+
             }
             else
             {
-                InvalidLogin();
+                Console.WriteLine();
             }
         }
-        else
+
+        static void ViewAccountsAndBalance(int accountIndex)
         {
-            InvalidLogin();
-        }
-
-    }
-
-    static void SignUpSystem()
-    {
-        Clear();
-        WriteLine("===========SIGN UP===========");
-        Console.Write("\nEnter a username: ");
-        string? userName = Console.ReadLine();
-        Console.Write("\nEnter a pin code: ");
-        string? password = Console.ReadLine();
-
-        if (userName != null && password != null && !userName.IsNullOrEmpty() && !password.IsNullOrEmpty())
-        {
-            //set-map the user to DB
-            using AppDataContext context = new AppDataContext(); //create new instance
-
-            var saltedPassword = DateTime.Now.ToString();
-            var hashedPassword = HashPassword($"{password}{saltedPassword}"); //to hash the pass
-
-            //to create a new user to db
-            context.Users.Add(new User() { Name = userName, Password = hashedPassword, Salt = saltedPassword });
-            context.SaveChanges();
-
-            bool isRunning = true;
-            while (isRunning)
-            {
-                Clear();
-                ForegroundColor = ConsoleColor.DarkGreen;
-                WriteLine("Sucessfull Registration!");
-                Console.ResetColor();
-                Console.WriteLine("[E] Exit");
-
-                if (ReadKey().Key == ConsoleKey.B)
-                {
-                    RunLoginSignUp();
-                }
-                isRunning = false;
-            }
-        }
-        else
-        {
-            Clear();
-            ForegroundColor = ConsoleColor.DarkRed;
-            Console.WriteLine("Registration failed");
+            Console.ForegroundColor = ConsoleColor.DarkCyan;
+            Console.WriteLine($"\n\tHi {bankAccounts[accountIndex].User}!\n" +
+                $"\n\tSavings: {bankAccounts[accountIndex].Savings}\n" +
+                $"\n\tSalary: {bankAccounts[accountIndex].Salary}\n");
             Console.ResetColor();
-            Console.WriteLine("click enter to return to menu");
-            ReadLine();
         }
 
-    }
+        static void Deposit(int accountIndex)
+        {
+            Console.Write("How much $$ do you want to deposit? ");
+            string? deposit = Console.ReadLine();
+            float depositAmount;
+            float.TryParse(deposit, out depositAmount);
 
-    static string HashPassword(string password)
-    {
-        SHA256 hash = SHA256.Create(); //create instance off sha class
-        var passwordBytes = Encoding.Default.GetBytes(password); //take string to return an array of bytes
-        var hashedPassword = hash.ComputeHash(passwordBytes); //to return array of bytes
-        return Convert.ToHexString(hashedPassword); //to convert the array of bytes to string encoded with hex characters
-    }
+            Console.Write($"\n\tselect account:\n" +
+                $"\n\t1. Savings\n" +
+                $"\n\t2. Salary\n");
 
-    static void InvalidLogin()
-    {
-        Clear();
-        ForegroundColor = ConsoleColor.DarkRed;
-        Console.WriteLine("Login Invalid");
-        Console.ResetColor();
-        Console.WriteLine("click enter to return to menu");
-        ReadLine();
-    }
+            int userChoiceAccount;
+            int.TryParse(Console.ReadLine(), out userChoiceAccount);
 
+            if (userChoiceAccount == 1)
+            {
+                bankAccounts[accountIndex].Savings += depositAmount;
+                Console.WriteLine($"Your new balance is {bankAccounts[accountIndex].Savings}");
+            }
+            else if (userChoiceAccount == 2)
+            {
+                bankAccounts[accountIndex].Salary += depositAmount;
+                Console.WriteLine($"Your new balance is {bankAccounts[accountIndex].Salary}");
+            }
+            else
+            {
+                Console.WriteLine("Invalid Option!");
+            }
+        }
+
+        static void WithdrawMoney(int accountIndex)
+        {
+            Console.Write("How much $$ do you want to withdraw? ");
+            string? withdraw = Console.ReadLine();
+            float withdrawAmount;
+            float.TryParse(withdraw, out withdrawAmount);
+
+            Console.Write($"\n\tselect account:\n" +
+                $"\n\t1. Savings\n" +
+                $"\n\t2. Salary\n");
+
+            int userChoiceAccount;
+            int.TryParse(Console.ReadLine(), out userChoiceAccount);
+
+            if (userChoiceAccount == 1)
+            {
+                if (withdrawAmount <= bankAccounts[accountIndex].Savings)
+                {
+                    bankAccounts[accountIndex].Savings -= withdrawAmount;
+                    Console.WriteLine($"Your new balance is {bankAccounts[accountIndex].Savings}");
+                }
+                else
+                {
+                    Console.WriteLine("You don't have enough money");
+                }
+            }
+            else if (userChoiceAccount == 2)
+            {
+                if (withdrawAmount <= bankAccounts[accountIndex].Salary)
+                {
+                    bankAccounts[accountIndex].Salary -= withdrawAmount;
+                    Console.WriteLine($"Your new balance is {bankAccounts[accountIndex].Salary}");
+                }
+                else
+                {
+                    Console.WriteLine("You don't have enough money");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Invalid Option!");
+            }
+        }
+
+        static void TransferBtwAccounts(int accountIndex)
+        {
+            Console.Write("To whom do you want to transfer?: ");
+            string? transferTo = Console.ReadLine();
+
+            int targetAccountIndex = GetAccountByUser(transferTo);
+
+            bool accountTargetFound = targetAccountIndex != -1;
+            if (accountTargetFound)
+            {
+                Console.Write($"\n\tselect type of account to transfer to:\n" +
+                    $"\n\t1. Savings\n" +
+                    $"\n\t2. Salary\n");
+
+                int targetTypeAccount;
+                int.TryParse(Console.ReadLine(), out targetTypeAccount);
+
+                Console.Write("How much $$ do you want to transfer? ");
+                string? transfer = Console.ReadLine();
+                float transferAmount;
+                float.TryParse(transfer, out transferAmount);
+
+                Console.Write($"\n\tselect type of account to transfer from:\n" +
+                    $"\n\t1. Savings\n" +
+                    $"\n\t2. Salary\n");
+
+                int srcTypeAccount;
+                int.TryParse(Console.ReadLine(), out srcTypeAccount);
+
+                if (srcTypeAccount == 1)
+                {
+                    if (targetTypeAccount == 1)
+                    {
+                        bankAccounts[accountIndex].Savings -= transferAmount;
+                        bankAccounts[targetAccountIndex].Savings += transferAmount;
+                    }
+                    else if (targetTypeAccount == 2)
+                    {
+                        bankAccounts[accountIndex].Savings -= transferAmount;
+                        bankAccounts[targetAccountIndex].Salary += transferAmount;
+
+                    }
+                }
+                else if (srcTypeAccount == 2)
+                {
+                    if (targetTypeAccount == 1)
+                    {
+                        bankAccounts[accountIndex].Salary -= transferAmount;
+                        bankAccounts[targetAccountIndex].Savings += transferAmount;
+                    }
+                    else if (targetTypeAccount == 2)
+                    {
+                        bankAccounts[accountIndex].Salary -= transferAmount;
+                        bankAccounts[targetAccountIndex].Salary += transferAmount;
+
+                    }
+                }
+
+                Console.WriteLine($"New Balance5: {bankAccounts[accountIndex].Savings}");
+                Console.WriteLine($"New Balance: {bankAccounts[accountIndex].Salary}");
+                Console.WriteLine($"New Balance: {bankAccounts[targetAccountIndex].Savings}");
+                Console.WriteLine($"New Balance: {bankAccounts[targetAccountIndex].Salary}");
+            }
+
+
+
+        }
+    }
 }
