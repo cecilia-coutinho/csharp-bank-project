@@ -8,14 +8,19 @@ namespace BankProject
 {
     internal class Program
     {
-        static BankAccount[] bankAccounts = { new BankAccount("maria", "1234", 100, 0), new BankAccount("pedro", "1234", 0, 0), new BankAccount("kalle", "1234", 0, 0), new BankAccount("johan", "1234", 0, 0), new BankAccount("matias", "1234", 0, 0) };
+        static BankUser[] bankUsers = {
+            new BankUser(0, "maria", "1234", new List<BankAccount>{new BankAccount("Savings", 1000), new BankAccount("Salary", 100) }),
+            new BankUser(0, "pedro", "1234", new List<BankAccount>{new BankAccount("Savings", 100), new BankAccount("Salary", 10) }),
+            new(0, "kalle", "1234", new List<BankAccount>{new BankAccount("Savings", 100), new BankAccount("Salary", 0) }),
+            new BankUser(0, "johan", "1234", new List < BankAccount >{new BankAccount("Savings", 0), new BankAccount("Salary", 0) }),
+            new BankUser(0, "matias", "1234", new List < BankAccount >{new BankAccount("Savings", 0), new BankAccount("Salary", 0) }) };
 
-        //to get bank account
-        static int GetAccountByUser(string? user)
+        //to get index of array of each user
+        static int GetBankUserIndexByUserName(string? user)
         {
-            for (int i = 0; i < bankAccounts.Length; i++)
+            for (int i = 0; i < bankUsers.Length; i++)
             {
-                if (bankAccounts[i].User == user)
+                if (bankUsers[i].User == user)
                 {
                     return i;
                 }
@@ -41,12 +46,12 @@ namespace BankProject
             Console.Write("\n\tPassword: \n\t");
             string? password = Console.ReadLine();
 
-            int accountIndex = GetAccountByUser(user); //get user index
-            bool accountFound = accountIndex != -1;
+            int userIndex = GetBankUserIndexByUserName(user); //get user index
+            bool accountFound = userIndex != -1;
 
             if (accountFound)
             {
-                if (bankAccounts[accountIndex].Password == password)
+                if (bankUsers[userIndex].Password == password)
                 {
                     bool runLoginMenu = true;
                     while (runLoginMenu)
@@ -71,16 +76,20 @@ namespace BankProject
                         switch (menuChoice)
                         {
                             case 1:
-                                ViewAccountsAndBalance(accountIndex);
+                                ViewAccountsAndBalance(userIndex);
+                                GoBackMenuOptions();
                                 break;
                             case 2:
-                                MakeDeposit(accountIndex);
+                                MakeDeposit(userIndex);
+                                GoBackMenuOptions();
                                 break;
                             case 3:
-                                TransferBtwAccounts(accountIndex);
+                                TransferBtwAccounts(userIndex);
+                                GoBackMenuOptions();
                                 break;
                             case 4:
-                                WithdrawMoney(accountIndex);
+                                WithdrawMoney(userIndex);
+                                GoBackMenuOptions();
                                 break;
                             case 5:
                                 Console.WriteLine("\n\tThanks for your visit!");
@@ -118,18 +127,27 @@ namespace BankProject
             }
         }
 
-        static void ViewAccountsAndBalance(int accountIndex)
+        static void ViewAccountsAndBalance(int userIndex)
         {
             Clear();
+            Console.WriteLine("\n=============BALANCE=============");
             Console.ForegroundColor = ConsoleColor.DarkCyan;
-            Console.WriteLine($"\n\tHi {bankAccounts[accountIndex].User.ToUpper()}!\n" +
-                $"\n\tSavings: {bankAccounts[accountIndex].Savings.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n" +
-                $"\n\tSalary: {bankAccounts[accountIndex].Salary.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n");
+            Console.WriteLine($"\n\tHi {bankUsers[userIndex].User.ToUpper()}!\n");
+
+            //to get user and bank account
+            for (int i = 0; i < bankUsers[userIndex].BankAccounts.Count; i++)
+            {
+                //show balance accounts and types
+                var accountBalance = bankUsers[userIndex].BankAccounts[i].Balance;
+                var accountType = bankUsers[userIndex].BankAccounts[i].AccountType;
+
+                Console.WriteLine($"\n\t{accountType}: {accountBalance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n");
+
+            }
             Console.ResetColor();
-            GoBackMenuOptions();
         }
 
-        static void MakeDeposit(int accountIndex)
+        static void MakeDeposit(int userIndex)
         {
             Clear();
             Console.Write("\n\tHow much $$ do you want to deposit? ");
@@ -137,69 +155,24 @@ namespace BankProject
             float depositAmount;
             float.TryParse(deposit, out depositAmount);
 
-            Console.WriteLine($"\n\tselect account:\n" +
-                $"\n\t1. Savings\n" +
-                $"\n\t2. Salary\n" +
-                $"\n\t3. Go Back\n");
-            Console.Write("\t");
+            int userChoiceAccount = SelectAccount(userIndex);
+            int goBackOption = GetGoBackOption(userIndex);
 
-            int userChoiceAccount;
-            int.TryParse(Console.ReadLine(), out userChoiceAccount);
+            bool userChoiceAccountIsValid = userChoiceAccount != -1;
 
-            if (userChoiceAccount == 1)
+
+            if (depositAmount <= 0)
             {
-                if (depositAmount <= 0)
-                {
-                    NegativeAmmount();
-                }
-                else
-                {
-                    bankAccounts[accountIndex].Savings += depositAmount;
-                    NewBalance(accountIndex);
-                    GoBackMenuOptions();
-                }
+                NegativeAmount();
             }
-            else if (userChoiceAccount == 2)
+            else if (userChoiceAccountIsValid)
             {
-                if (depositAmount <= 0)
-                {
-                    NegativeAmmount();
-                }
-                else
-                {
-                    bankAccounts[accountIndex].Salary += depositAmount;
-                    NewBalance(accountIndex);
-                    GoBackMenuOptions();
-                }
-
-            }
-            else if (userChoiceAccount == 3)
-            {
-                Write("\n\tAre you sure do you want to come back?(Type YES or NO); ");
-                string? restart = Console.ReadLine()?.ToUpper();
-
-                if (restart == "NO")
-                {
-                    MakeDeposit(accountIndex);
-                }
-                else if (restart == "YES")
-                {
-                    GoBackMenuOptions();
-                }
-                else
-                {
-                    InvalidOption();
-                    GoBackMenuOptions();
-                }
-            }
-            else
-            {
-                InvalidOption();
-                GoBackMenuOptions();
+                bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance += depositAmount;
+                NewBalance(userIndex);
             }
         }
 
-        static void WithdrawMoney(int accountIndex)
+        static void WithdrawMoney(int userIndex)
         {
             Clear();
             Console.Write("How much $$ do you want to withdraw? ");
@@ -207,84 +180,54 @@ namespace BankProject
             float withdrawAmount;
             float.TryParse(withdraw, out withdrawAmount);
 
-            Console.WriteLine($"\n\tselect account:\n" +
-                $"\n\t1. Savings\n" +
-                $"\n\t2. Salary\n");
-            Console.Write("\t");
+            int userChoiceAccount = SelectAccount(userIndex);
+            int goBackOption = GetGoBackOption(userIndex);
+            bool userChoiceAccountIsValid = userChoiceAccount != -1;
 
-            int userChoiceAccount;
-            int.TryParse(Console.ReadLine(), out userChoiceAccount);
-
-            if (userChoiceAccount == 1)
+            if (withdrawAmount <= 0)
             {
-                if (withdrawAmount <= 0)
+                NegativeAmount();
+            }
+            else if (userChoiceAccountIsValid)
+            {
+                var accountBalance = bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance;
+
+                if (withdrawAmount <= accountBalance)
                 {
-                    NegativeAmmount();
+                    bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance -= withdrawAmount;
+                    NewBalance(userIndex);
                 }
                 else
                 {
-                    if (withdrawAmount <= bankAccounts[accountIndex].Savings)
-                    {
-                        bankAccounts[accountIndex].Savings -= withdrawAmount;
-                        NewBalance(accountIndex);
-                    }
-                    else
-                    {
-                        Console.WriteLine("\n\tYou don't have enough money");
-                    }
+                    Console.WriteLine("\n\tYou don't have enough money");
                 }
             }
-            else if (userChoiceAccount == 2)
-            {
-                if (withdrawAmount <= 0)
-                {
-                    NegativeAmmount();
-                }
-                else
-                {
-                    if (withdrawAmount <= bankAccounts[accountIndex].Salary)
-                    {
-                        bankAccounts[accountIndex].Salary -= withdrawAmount;
-                        NewBalance(accountIndex);
-                    }
-                    else
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("\n\tYou don't have enough money");
-                        ResetColor();
-                    }
-                }
-            }
-            else
-            {
-                InvalidOption();
-            }
-            GoBackMenuOptions();
         }
 
-        static void TransferBtwAccounts(int accountIndex)
+
+
+        static void TransferBtwAccounts(int userIndex)
         {
             Clear();
             Console.Write("\n\tTo whom do you want to transfer?: ");
             string? transferTo = Console.ReadLine();
 
-            int targetAccountIndex = GetAccountByUser(transferTo);
+            int targetUserIndex = GetBankUserIndexByUserName(transferTo);
 
-            bool accountTargetFound = targetAccountIndex != -1;
+            bool accountTargetFound = targetUserIndex != -1;
+
             if (accountTargetFound)
             {
                 Clear();
-                Console.WriteLine($"\n\tselect type of account to transfer from:\n" +
-                $"\n\t1. Savings\n" +
-                $"\n\t2. Salary\n");
-                Console.Write("\t");
+                Console.WriteLine($"\n\tselect type of account to transfer from:\n");
 
-                int srcTypeAccount;
-                int.TryParse(Console.ReadLine(), out srcTypeAccount);
+                int userChoiceAccount = SelectAccount(userIndex);
+                //int goBackOption = GetGoBackOption(userIndex);
 
-                if (srcTypeAccount == 1)
+                bool invalidUserChoiceAccount = userChoiceAccount == -1;
+
+                if (!invalidUserChoiceAccount)
                 {
-                    Clear();
                     Console.Write("\n\tHow much $$ do you want to transfer? ");
                     string? transfer = Console.ReadLine();
                     float transferAmount;
@@ -292,111 +235,53 @@ namespace BankProject
 
                     if (transferAmount <= 0)
                     {
-                        NegativeAmmount();
+                        NegativeAmount();
                     }
-                    else if (bankAccounts[accountIndex].Savings < transferAmount)
+                    else if (bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance < transferAmount)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("\n\tERROR! Not allowed. You don't have enough money");
                         ResetColor();
+                        Console.WriteLine("\n\tPress ENTER to see your Balance");
+                        Console.ReadLine();
+                        ViewAccountsAndBalance(userIndex);
+
                     }
                     else
                     {
                         Clear();
-                        Console.WriteLine($"\n\tselect type of account to transfer to:\n" +
-                        $"\n\t1. Savings\n" +
-                        $"\n\t2. Salary\n");
-                        Console.Write("\t");
+                        int targetUserChoiceAccount = SelectAccount(targetUserIndex);
+                        bool invalidTargetUserChoiceAccount = targetUserChoiceAccount == -1;
 
-                        int targetTypeAccount;
-                        int.TryParse(Console.ReadLine(), out targetTypeAccount);
-
-                        if (targetTypeAccount == 1)
+                        if (!invalidTargetUserChoiceAccount)
                         {
-                            bankAccounts[accountIndex].Savings -= transferAmount;
-                            bankAccounts[targetAccountIndex].Savings += transferAmount;
-                        }
-                        else if (targetTypeAccount == 2)
-                        {
-                            bankAccounts[accountIndex].Savings -= transferAmount;
-                            bankAccounts[targetAccountIndex].Salary += transferAmount;
+                            bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance -= transferAmount;
+                            bankUsers[targetUserIndex].BankAccounts[targetUserChoiceAccount].Balance += transferAmount;
 
+                            NewBalance(userIndex);
                         }
                         else
                         {
                             ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("Transaction not allowed!");
                             ResetColor();
-                            InvalidOption();
+                            //InvalidOption();
                         }
                     }
-                }
-                else if (srcTypeAccount == 2)
-                {
-                    Clear();
-                    Console.Write("\n\tHow much $$ do you want to transfer? ");
-                    string? transfer = Console.ReadLine();
-                    float transferAmount;
-                    float.TryParse(transfer, out transferAmount);
 
-                    if (transferAmount <= 0)
-                    {
-                        NegativeAmmount();
-                    }
-                    else if (bankAccounts[accountIndex].Salary < transferAmount)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("\n\tERROR! Not allowed. You don't have enough money");
-                        ResetColor();
-                    }
-                    else
-                    {
-                        Clear();
-                        Console.WriteLine($"\n\tselect type of account to transfer to:\n" +
-                        $"\n\t1. Savings\n" +
-                        $"\n\t2. Salary\n");
-                        Console.Write("\t");
-
-                        int targetTypeAccount;
-                        int.TryParse(Console.ReadLine(), out targetTypeAccount);
-
-                        if (targetTypeAccount == 1)
-                        {
-                            bankAccounts[accountIndex].Salary -= transferAmount;
-                            bankAccounts[targetAccountIndex].Savings += transferAmount;
-                        }
-                        else if (targetTypeAccount == 2)
-                        {
-                            bankAccounts[accountIndex].Salary -= transferAmount;
-                            bankAccounts[targetAccountIndex].Salary += transferAmount;
-                        }
-                        else
-                        {
-                            ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Transaction not allowed!");
-                            ResetColor();
-                            InvalidOption();
-                        }
-                    }
                 }
-                else
-                {
-                    InvalidOption();
-                }
-                //Console.WriteLine($"{bankAccounts[accountIndex].User}, New Balance Savings: {bankAccounts[accountIndex].Savings.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}");
-                //Console.WriteLine($"{bankAccounts[accountIndex].User}, New Balance Salary: {bankAccounts[accountIndex].Salary.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}");
-                //Console.WriteLine($"{bankAccounts[targetAccountIndex].User}, New Balance Savings: {bankAccounts[targetAccountIndex].Savings.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}");
-                //Console.WriteLine($"{bankAccounts[targetAccountIndex].User}, New Balance Salary: {bankAccounts[targetAccountIndex].Salary.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}");
-                NewBalance(accountIndex);
+                //Console.WriteLine($"{bankUsers[userIndex].User}, New Balance Savings Account: {bankUsers[userIndex].SavingsAccount.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}");
+                //Console.WriteLine($"{bankUsers[userIndex].User}, New Balance Salary Account: {bankUsers[userIndex].SalaryAccount.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}");
+                //Console.WriteLine($"{bankUsers[targetUserIndex].User}, New Balance Savings Account: {bankUsers[targetUserIndex].SavingsAccount.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}");
+                //Console.WriteLine($"{bankUsers[targetUserIndex].User}, New Balance Salary Account: {bankUsers[targetUserIndex].SalaryAccount.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}");
             }
             else
             {
                 ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("\n\tInvalid User".ToUpper());
                 ResetColor();
-                InvalidOption();
+                //InvalidOption();
             }
-            GoBackMenuOptions();
         }
         static void GoBackMenuOptions()
         {
@@ -404,29 +289,69 @@ namespace BankProject
             Console.ReadLine();
         }
 
-        static void NewBalance(int accountIndex)
+        static void NewBalance(int userIndex)
         {
             Clear();
             Console.WriteLine("\n=============Balance Updated=============");
-            Console.ForegroundColor = ConsoleColor.DarkCyan;
-            Console.WriteLine($"\n\tHi {bankAccounts[accountIndex].User.ToUpper()},\n \n\tYour new balance is:\n\tSavings: {bankAccounts[accountIndex].Savings.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))} \n\tSalary: {bankAccounts[accountIndex].Salary.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}");
-            Console.ResetColor();
+            ViewAccountsAndBalance(userIndex);
         }
+
         static void InvalidOption()
         {
             ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("\n\tERROR: Invalid Option!".ToUpper());
             ResetColor();
-            ReadLine();
         }
 
-        static void NegativeAmmount()
+        static void NegativeAmount()
         {
             ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("\n\tERROR! Transaction not allowed." +
-                "\n\tThe ammount needs to be higher than 0,00".ToUpper());
+                "\n\tThe Amount needs to be valid or higher than 0,00".ToUpper());
             ResetColor();
-            ReadLine();
+        }
+
+        static int SelectAccount(int userIndex)
+        {
+            Console.WriteLine($"\n\tselect account:\n");
+
+            for (int i = 0; i < bankUsers[userIndex].BankAccounts.Count; i++)
+            {
+                var accountType = bankUsers[userIndex].BankAccounts[i].AccountType;
+                var menuNumber = i;
+
+                //to start menu choices with option 1 instead of 0
+                Console.WriteLine($"\n\t{menuNumber + 1}. {accountType}\n");
+
+            }
+            var goBackOption = GetGoBackOption(userIndex);
+
+            Console.WriteLine($"\n\t{goBackOption + 1}. Go Back\n");
+            Console.Write("\t");
+
+            int userChoiceAccount;
+            bool userChoiceIsValid = int.TryParse(Console.ReadLine(), out userChoiceAccount);
+            userChoiceAccount -= 1; //to get the correct index instead of the printed index
+
+            if (userChoiceIsValid)
+            {
+                if (userChoiceAccount < bankUsers[userIndex].BankAccounts.Count)
+                {
+                    return userChoiceAccount;
+                }
+            }
+
+            if (userChoiceAccount != goBackOption)
+            {
+                InvalidOption();
+            }
+
+            return -1;
+        }
+
+        static int GetGoBackOption(int userIndex)
+        {
+            return bankUsers[userIndex].BankAccounts.Count;
         }
     }
 }
