@@ -190,12 +190,19 @@ namespace BankProject
             }
             else if (userChoiceAccountIsValid)
             {
-                var accountBalance = bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance;
+                Console.Write("\n\tENTER your Password: \n\t");
+                string? password = Console.ReadLine();
 
-                if (withdrawAmount <= accountBalance)
+
+                if (bankUsers[userIndex].Password == password)
                 {
-                    bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance -= withdrawAmount;
-                    NewBalance(userIndex);
+                    var accountBalance = bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance;
+
+                    if (withdrawAmount <= accountBalance)
+                    {
+                        bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance -= withdrawAmount;
+                        NewBalance(userIndex);
+                    }
                 }
                 else
                 {
@@ -219,17 +226,25 @@ namespace BankProject
             if (accountTargetFound)
             {
                 Clear();
+                Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine($"\n\tselect type of account to transfer from:\n");
+                Console.ResetColor();
 
                 int userChoiceAccount = SelectAccount(userIndex);
                 //int goBackOption = GetGoBackOption(userIndex);
+
+                Console.WriteLine($"\n\tselect type of account to transfer to:\n");
+
+                int targetUserChoiceAccount = SelectAccount(targetUserIndex);
 
                 bool invalidUserChoiceAccount = userChoiceAccount == -1;
 
                 if (!invalidUserChoiceAccount)
                 {
+                    ForegroundColor = ConsoleColor.Green;
                     Console.Write("\n\tHow much $$ do you want to transfer? ");
                     string? transfer = Console.ReadLine();
+                    ResetColor();
                     float transferAmount;
                     float.TryParse(transfer, out transferAmount);
 
@@ -249,31 +264,56 @@ namespace BankProject
                     }
                     else
                     {
-                        Clear();
-                        int targetUserChoiceAccount = SelectAccount(targetUserIndex);
-                        bool invalidTargetUserChoiceAccount = targetUserChoiceAccount == -1;
 
-                        if (!invalidTargetUserChoiceAccount)
+                        //ADD PIN TO CONFIRM TRANSACTION
+
+                        Console.Write("\n\tENTER your Password: \n\t");
+                        string? password = Console.ReadLine();
+
+
+                        if (bankUsers[userIndex].Password == password)
                         {
-                            bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance -= transferAmount;
-                            bankUsers[targetUserIndex].BankAccounts[targetUserChoiceAccount].Balance += transferAmount;
+                            Clear();
+                            //targetUserChoiceAccount = SelectAccount(targetUserIndex);
+                            bool invalidTargetUserChoiceAccount = targetUserChoiceAccount == -1;
 
-                            NewBalance(userIndex);
+                            if (!invalidTargetUserChoiceAccount)
+                            {
+                                bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance -= transferAmount;
+                                bankUsers[targetUserIndex].BankAccounts[targetUserChoiceAccount].Balance += transferAmount;
+
+                                NewBalance(userIndex);
+                            }
+
                         }
                         else
                         {
                             ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Transaction not allowed!");
+                            Console.WriteLine("Transaction not allowed. Check your data!");
                             ResetColor();
                             //InvalidOption();
                         }
                     }
 
                 }
-                //Console.WriteLine($"{bankUsers[userIndex].User}, New Balance Savings Account: {bankUsers[userIndex].SavingsAccount.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}");
-                //Console.WriteLine($"{bankUsers[userIndex].User}, New Balance Salary Account: {bankUsers[userIndex].SalaryAccount.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}");
-                //Console.WriteLine($"{bankUsers[targetUserIndex].User}, New Balance Savings Account: {bankUsers[targetUserIndex].SavingsAccount.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}");
-                //Console.WriteLine($"{bankUsers[targetUserIndex].User}, New Balance Salary Account: {bankUsers[targetUserIndex].SalaryAccount.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}");
+
+                ////PRINT TO CHECK TRANSFER
+                //for (int i = 0; i < bankUsers[userIndex].BankAccounts.Count; i++)
+                //{
+                //    //show balance accounts and types
+                //    var accountBalance = bankUsers[userIndex].BankAccounts[i].Balance;
+                //    var accountType = bankUsers[userIndex].BankAccounts[i].AccountType;
+
+                //    var targetAccountBalance = bankUsers[targetUserIndex].BankAccounts[i].Balance;
+                //    var targetAccountType = bankUsers[targetUserIndex].BankAccounts[i].AccountType;
+
+                //    Console.WriteLine($"\n\tHi {bankUsers[userIndex].User.ToUpper()}!\n");
+                //    Console.WriteLine($"\n\t{accountType}: {accountBalance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n");
+
+                //    Console.WriteLine($"\n\tHi {bankUsers[targetUserIndex].User.ToUpper()}!\n");
+                //    Console.WriteLine($"\n\t{targetAccountType}: {targetAccountBalance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n");
+
+                //}
             }
             else
             {
