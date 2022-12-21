@@ -105,29 +105,28 @@ namespace BankProject
                         CounterTimeFailedAttempt(countPassAttempts);
                     }
                 }
-
             }
+        }
 
-            static void CounterTimeFailedAttempt(int countPassAttempts)
+        static void CounterTimeFailedAttempt(int countPassAttempts)
+        {
+            int secondsCounter = 180;
+            for (int i = secondsCounter - 1; i <= secondsCounter; i--)
             {
-                int secondsCounter = 180;
-                for (int i = secondsCounter - 1; i <= secondsCounter; i--)
+                Thread.Sleep(1000);
+                if (i <= 0)
                 {
-                    Thread.Sleep(1000);
-                    if (i <= 0)
-                    {
-                        RunSystem();
-                        break;
-                    }
-                    else
-                    {
-                        Clear();
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"\n\tFailed Attempts: {countPassAttempts}");
-                        Console.WriteLine("\n\tMax failed attempts.\n".ToUpper());
-                        Console.ResetColor();
-                        Console.WriteLine($"\n\tPlease, wait! The system will automatically restart after {ConvertSecondsIntToTimeFormat(i)}.\n");
-                    }
+                    RunSystem();
+                    break;
+                }
+                else
+                {
+                    Clear();
+                    Console.WriteLine($"\n\tFailed Attempts: {countPassAttempts}");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("\n\tMax failed attempts.\n".ToUpper());
+                    Console.ResetColor();
+                    Console.WriteLine($"\n\tPlease, wait! The system will automatically restart after {ConvertSecondsIntToTimeFormat(i)}.\n");
                 }
             }
         }
