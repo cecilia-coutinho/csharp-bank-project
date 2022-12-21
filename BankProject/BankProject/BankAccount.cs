@@ -8,16 +8,13 @@ namespace BankProject
 {
     public class BankUser
     {
-        public int Id = 0;
         public string User { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
 
         public List<BankAccount> BankAccounts { get; set; }
 
-        public BankUser(int id, string user, string password, List<BankAccount> bankAccounts)
+        public BankUser(string user, string password, List<BankAccount> bankAccounts)
         {
-            Id = id;
-            Id++;
             User = user;
             Password = password;
             BankAccounts = bankAccounts;
