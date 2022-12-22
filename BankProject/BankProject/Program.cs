@@ -3,6 +3,7 @@ using System.Dynamic;
 using System.Globalization;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
+using System.Security.Principal;
 using System.Xml;
 using static System.Console; //to simplify Console references
 
@@ -12,9 +13,9 @@ namespace BankProject
     {
         static BankUser[] bankUsers = {
             new BankUser("maria", "1234", new List<BankAccount>{new BankAccount("Savings", 1000), new BankAccount("Salary", 100) }),
-            new BankUser("pedro", "1234", new List<BankAccount>{new BankAccount("Savings", 100), new BankAccount("Salary", 10) }),
-            new("kalle", "1234", new List<BankAccount>{new BankAccount("Savings", 100), new BankAccount("Salary", 0) }),
-            new BankUser("johan", "1234", new List < BankAccount >{new BankAccount("Savings", 0), new BankAccount("Salary", 0) }),
+            new BankUser("pedro", "1234", new List<BankAccount>{new BankAccount("Savings", 100) }),
+            new BankUser("kalle", "1234", new List<BankAccount>{new BankAccount("Savings", 100) }),
+            new BankUser("johan", "1234", new List < BankAccount >{new BankAccount("Salary", 0) }),
             new BankUser("matias", "1234", new List < BankAccount >{new BankAccount("Savings", 0), new BankAccount("Salary", 0) }) };
 
         //to get index of array of each user
@@ -157,7 +158,8 @@ namespace BankProject
                     "\n\t2. Make a Deposit\n" +
                     "\n\t3. Transfer Between Accounts\n" +
                     "\n\t4. Withdraw Money\n" +
-                    "\n\t5. Log Out\n");
+                    "\n\t5. Create New Account\n" +
+                    "\n\t6. Log Out\n");
                 Console.Write("\t Select menu: ");
 
                 int menuChoice;
@@ -182,6 +184,10 @@ namespace BankProject
                         GoBackMenuOptions();
                         break;
                     case 5:
+                        CreateNewAccount(userIndex);
+                        GoBackMenuOptions();
+                        break;
+                    case 6:
                         Console.WriteLine("\n\tThanks for your visit!");
                         Thread.Sleep(1000);
                         RunSystem();
@@ -239,7 +245,7 @@ namespace BankProject
             else if (userChoiceAccountIsValid)
             {
                 bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance += depositAmount;
-                NewBalance(userIndex);
+                ViewAccountsAndBalance(userIndex);
             }
         }
 
@@ -272,7 +278,7 @@ namespace BankProject
                     if (withdrawAmount <= accountBalance)
                     {
                         bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance -= withdrawAmount;
-                        NewBalance(userIndex);
+                        ViewAccountsAndBalance(userIndex);
                     }
                 }
                 else
@@ -281,8 +287,6 @@ namespace BankProject
                 }
             }
         }
-
-
 
         static void TransferBtwAccounts(int userIndex)
         {
@@ -336,7 +340,7 @@ namespace BankProject
                     else
                     {
 
-                        //ADD PIN TO CONFIRM TRANSACTION
+                        //add pin to confirm transaction
 
                         Console.Write("\n\tENTER your Password: \n\t");
                         string? password = Console.ReadLine();
@@ -353,14 +357,14 @@ namespace BankProject
                                 bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance -= transferAmount;
                                 bankUsers[targetUserIndex].BankAccounts[targetUserChoiceAccount].Balance += transferAmount;
 
-                                NewBalance(userIndex);
+                                ViewAccountsAndBalance(userIndex);
                             }
 
                         }
                         else
                         {
                             ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Transaction not allowed. Check your data!");
+                            Console.WriteLine("Transaction not allowed. Check your password!");
                             ResetColor();
                             //InvalidOption();
                         }
@@ -394,18 +398,86 @@ namespace BankProject
                 //InvalidOption();
             }
         }
+
+        static void CreateNewAccount(int userIndex)
+        {
+            //all bank accounts
+            List<string> allAccountTypes = new List<string>();
+            allAccountTypes.Add("Savings");
+            allAccountTypes.Add("Salary");
+
+            Console.WriteLine($"\n\tselect account:\n");
+
+            //get available accounts for creation
+            for (int j = 0; j < allAccountTypes?.Count; j++)
+            {
+                var menuNumber = j;
+
+                for (int i = 0; i < bankUsers[userIndex].BankAccounts.Count; i++)
+                {
+                    var accountType = bankUsers[userIndex].BankAccounts[i].AccountType;
+
+
+                    if (allAccountTypes.Contains(accountType))
+                    {
+                        allAccountTypes.Remove(accountType);
+                    }
+                }
+
+                //print menu with available accounts
+                if (allAccountTypes.Count > 0)
+                {
+                    Clear();
+                    Console.WriteLine($"\n\t{menuNumber + 1}. {allAccountTypes[j]}\n");
+
+                    var goBackOption = GetGoBackOption(userIndex);
+
+                    Console.WriteLine($"\n\t{goBackOption + 1}. Go Back\n");
+                    Console.Write("\t");
+
+                    //get menu choice
+                    int userChoiceAccount;
+                    bool userChoiceIsValid = int.TryParse(Console.ReadLine(), out userChoiceAccount);
+                    userChoiceAccount -= 1; //to get the correct index instead of the printed index
+
+                    //add new account
+                    if (userChoiceIsValid)
+                    {
+                        //TO DO: ADD THE NEW ACCOUNT TO THE LIST OF ACCOUNTS
+                    }
+
+                    if (userChoiceAccount != goBackOption)
+                    {
+                        InvalidOption();
+                    }
+                }
+                else
+                {
+                    Clear();
+                    ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("\n\t You already have all available accounts\n");
+                    ResetColor();
+                    //GoBackMenuOptions();
+                    break;
+                }
+            }
+
+
+            //return -1;
+        }
+
         static void GoBackMenuOptions()
         {
             Console.WriteLine("\n\tPress ENTER to go back to the menu.\n");
             Console.ReadLine();
         }
 
-        static void NewBalance(int userIndex)
-        {
-            Clear();
-            Console.WriteLine("\n=============Balance Updated=============");
-            ViewAccountsAndBalance(userIndex);
-        }
+        //static void NewBalance(int userIndex)
+        //{
+        //    Clear();
+        //    Console.WriteLine("\n=============Balance Updated=============");
+        //    ViewAccountsAndBalance(userIndex);
+        //}
 
         static void InvalidOption()
         {
