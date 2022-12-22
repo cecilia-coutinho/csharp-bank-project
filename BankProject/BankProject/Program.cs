@@ -159,7 +159,8 @@ namespace BankProject
                     "\n\t3. Transfer Between Accounts\n" +
                     "\n\t4. Withdraw Money\n" +
                     "\n\t5. Create New Account\n" +
-                    "\n\t6. Log Out\n");
+                    "\n\t6. Change Password\n" +
+                    "\n\t7. Log Out\n");
                 Console.Write("\t Select menu: ");
 
                 int menuChoice;
@@ -188,6 +189,10 @@ namespace BankProject
                         GoBackMenuOptions();
                         break;
                     case 6:
+                        ChangePassword(userIndex);
+                        GoBackMenuOptions();
+                        break;
+                    case 7:
                         Console.WriteLine("\n\tThanks for your visit!");
                         Thread.Sleep(1000);
                         RunSystem();
@@ -372,7 +377,7 @@ namespace BankProject
 
                 }
 
-                ////PRINT TO CHECK TRANSFER
+                ////PRINT TO CHECK TRANSFER (both users)
                 //for (int i = 0; i < bankUsers[userIndex].BankAccounts.Count; i++)
                 //{
                 //    //show balance accounts and types
@@ -395,7 +400,6 @@ namespace BankProject
                 ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("\n\tInvalid User".ToUpper());
                 ResetColor();
-                //InvalidOption();
             }
         }
 
@@ -436,7 +440,6 @@ namespace BankProject
                     Console.Write("\t");
 
                     //get menu choice
-
                     int userChoiceAccount;
                     int.TryParse(Console.ReadLine(), out userChoiceAccount);
                     bool userChoiceIsValid = Convert.ToBoolean(userChoiceAccount);
@@ -476,13 +479,33 @@ namespace BankProject
             }
         }
 
+        static void ChangePassword(int userIndex)
+        {
+            Clear();
+            Console.Write("\n\tType your new Password: ");
+            string? passwordNewOne = Console.ReadLine();
+            if (passwordNewOne != null)
+            {
+                bankUsers[userIndex].Password = passwordNewOne;
+                ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("\n\tthe password was successfully changed!\n".ToUpper());
+                ResetColor();
+            }
+            else
+            {
+                ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("\n\tERROR! Password could not be changed");
+                ResetColor();
+            }
+        }
+
         static void GoBackMenuOptions()
         {
             Console.WriteLine("\n\tPress ENTER to go back to the menu.\n");
             Console.ReadLine();
         }
 
-        //static void NewBalance(int userIndex)
+        ///static void NewBalance(int userIndex)
         //{
         //    Clear();
         //    Console.WriteLine("\n=============Balance Updated=============");
