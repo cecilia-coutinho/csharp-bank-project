@@ -448,6 +448,11 @@ namespace BankProject
                         for (int i = 0; i < allAccountTypes.Count; i++)
                         {
                             bankUsers[userIndex].BankAccounts.Add(new BankAccount(allAccountTypes[userChoiceAccount], 0));
+                            ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine($"\n\t New account '{allAccountTypes[userChoiceAccount]}' successfully created!\t");
+                            ResetColor();
+                            Console.WriteLine("\n\t Press enter to check your accounts and balance\t");
+                            ReadLine();
                             ViewAccountsAndBalance(userIndex);
                         }
                     }
