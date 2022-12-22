@@ -436,17 +436,26 @@ namespace BankProject
                     Console.Write("\t");
 
                     //get menu choice
+
                     int userChoiceAccount;
-                    bool userChoiceIsValid = int.TryParse(Console.ReadLine(), out userChoiceAccount);
+                    int.TryParse(Console.ReadLine(), out userChoiceAccount);
+                    bool userChoiceIsValid = Convert.ToBoolean(userChoiceAccount);
                     userChoiceAccount -= 1; //to get the correct index instead of the printed index
 
                     //add new account
-                    if (userChoiceIsValid)
+                    if (userChoiceIsValid && userChoiceAccount != goBackOption)
                     {
-                        //TO DO: ADD THE NEW ACCOUNT TO THE LIST OF ACCOUNTS
+                        for (int i = 0; i < allAccountTypes.Count; i++)
+                        {
+                            bankUsers[userIndex].BankAccounts.Add(new BankAccount(allAccountTypes[userChoiceAccount], 0));
+                            ViewAccountsAndBalance(userIndex);
+                        }
                     }
-
-                    if (userChoiceAccount != goBackOption)
+                    else if (userChoiceAccount == goBackOption)
+                    {
+                        break;
+                    }
+                    else
                     {
                         InvalidOption();
                     }
@@ -457,13 +466,9 @@ namespace BankProject
                     ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("\n\t You already have all available accounts\n");
                     ResetColor();
-                    //GoBackMenuOptions();
                     break;
                 }
             }
-
-
-            //return -1;
         }
 
         static void GoBackMenuOptions()
