@@ -159,8 +159,9 @@ namespace BankProject
                     "\n\t3. Transfer Between Accounts\n" +
                     "\n\t4. Withdraw Money\n" +
                     "\n\t5. Create New Account\n" +
-                    "\n\t6. Change Password\n" +
-                    "\n\t7. Log Out\n");
+                    "\n\t6. Money Exchange Simulation\n" +
+                    "\n\t7. Change Password\n" +
+                    "\n\t8. Log Out\n");
                 Console.Write("\t Select menu: ");
 
                 int menuChoice;
@@ -189,10 +190,17 @@ namespace BankProject
                         GoBackMenuOptions();
                         break;
                     case 6:
+                        /*
+                         * only does a simulation with a fixed exchange rate
+                         * The method doesn't do anything directly in the user account
+                        */
+                        MenuCurrencyConverterSimulation();
+                        break;
+                    case 7:
                         ChangePassword(userIndex);
                         GoBackMenuOptions();
                         break;
-                    case 7:
+                    case 8:
                         Console.WriteLine("\n\tThanks for your visit!");
                         Thread.Sleep(1000);
                         RunSystem();
@@ -228,7 +236,6 @@ namespace BankProject
             }
             Console.ResetColor();
         }
-
         static void MakeDeposit(int userIndex)
         {
             Clear();
@@ -497,6 +504,63 @@ namespace BankProject
                 Console.WriteLine("\n\tERROR! Password could not be changed");
                 ResetColor();
             }
+        }
+
+        static bool MenuCurrencyConverterSimulation()
+        {
+            Clear();
+            Console.WriteLine("\n\tTo which currency do you want to convert?\n\tPlease select one of the options below:");
+            Console.WriteLine("\n\t1. From SEK to Dollar\n" +
+                "\n\t2. From SEK to Euro\n" +
+                "\n\t3. Go Back to menu\n");
+            Console.Write("\t Select menu: ");
+
+            int menuChoice;
+            int.TryParse(Console.ReadLine(), out menuChoice);
+
+            switch (menuChoice)
+            {
+                case 1:
+                    GetCurrencyConvertToDollar();
+                    GoBackMenuOptions();
+                    return true;
+                case 2:
+                    GetCurrencyConvertToEuro();
+                    GoBackMenuOptions();
+                    return true;
+                case 3:
+                    Console.WriteLine("\n\tThanks for your visit!");
+                    Thread.Sleep(1000);
+                    return false;
+                default:
+                    Console.Clear();
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("\n\tPlease, choose 1-3 from the menu\n");
+                    Console.ResetColor();
+                    ReadLine();
+                    MenuCurrencyConverterSimulation();
+                    return true;
+            }
+        }
+
+        static void GetCurrencyConvertToDollar()
+        {
+            Clear();
+            Console.Write("\n\tHow much SEK do you want to Convert: ");
+            float currencyAmount;
+            float.TryParse(Console.ReadLine(), out currencyAmount);
+            ConvertToDollar convertToDollar = new ConvertToDollar(currencyAmount);
+            Console.WriteLine(convertToDollar.PrintCurrencyConverter(currencyAmount));
+        }
+
+        static void GetCurrencyConvertToEuro()
+        {
+            Clear();
+            Console.Write("\n\tHow much SEK do you want to Convert: ");
+            float currencyAmount;
+            float.TryParse(Console.ReadLine(), out currencyAmount);
+            ConvertToEuro convertToEuro = new ConvertToEuro(currencyAmount);
+            Console.WriteLine(convertToEuro.PrintCurrencyConverter(currencyAmount));
         }
 
         static void GoBackMenuOptions()
