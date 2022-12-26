@@ -1,10 +1,4 @@
-﻿using System.Diagnostics.Metrics;
-using System.Dynamic;
-using System.Globalization;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
-using System.Security.Principal;
-using System.Xml;
+﻿using System.Globalization;
 using static System.Console; //to simplify Console references
 
 namespace BankProject
@@ -35,6 +29,9 @@ namespace BankProject
 
         static void Main(string[] args)
         {
+            //int userIndex = bankUsers.Length;
+            //ReadDataFromFile(userIndex);
+            //ReadLine();
             RunSystem();
         }
 
@@ -46,6 +43,7 @@ namespace BankProject
             string? user = Console.ReadLine()?.ToLower();
 
             int userIndex = GetBankUserIndexByUserName(user); //get user index
+            //WriteDataToFile(userIndex);
             bool accountFound = userIndex != -1;
 
             if (accountFound)
@@ -68,6 +66,46 @@ namespace BankProject
             Console.ForegroundColor = ConsoleColor.DarkCyan;
             Console.WriteLine("\n\t============WELCOME TO BANK XZ!============\n");
             Console.ResetColor();
+        }
+
+        static void WriteDataToFile(int userIndex)
+        {
+            string username = bankUsers[userIndex].User;
+            string password = bankUsers[userIndex].Password;
+
+            for (int j = 0; j <= bankUsers.Length; j++)
+            {
+                using (StreamWriter sw = new StreamWriter(File.Create(@".\my_file.txt")))
+                {
+                    sw.WriteLine("\nUserIndex:" + userIndex);
+                    sw.WriteLine("Username: " + username +
+                        "\nUserPass: " + password);
+
+                    for (int i = 0; i < bankUsers[userIndex].BankAccounts.Count; i++)
+                    {
+                        string accountType = bankUsers[userIndex].BankAccounts[i].AccountType;
+                        float balance = bankUsers[userIndex].BankAccounts[i].Balance;
+
+                        sw.WriteLine("AccountType: " + accountType +
+                            " || Balance: " + balance + "SEK");
+                    }
+                    sw.WriteLine("==========================");
+                    sw.Close();
+                }
+            }
+        }
+
+        static void ReadDataFromFile(int userIndex)
+        {
+            using (StreamReader sr = File.OpenText(@".\my_file.txt"))
+            {
+                string? tables = null;
+
+                while ((tables = sr.ReadLine()) != null)
+                {
+                    Console.WriteLine("{0}", tables);
+                }
+            }
         }
 
         static void CheckPassAndRunAccount(string? user, int userIndex)

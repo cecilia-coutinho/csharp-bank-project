@@ -1,0 +1,7 @@
+
+UserIndex:0
+Username: maria
+UserPass: 1234
+AccountType: Savings || Balance: 1000SEK
+AccountType: Salary || Balance: 100SEK
+==========================
