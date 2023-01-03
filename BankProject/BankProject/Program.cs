@@ -6,6 +6,8 @@ using System.IO;
 using System.IO.Enumeration;
 using static System.Console; //to simplify Console references
 using System.Reflection.Metadata;
+using System.Security.Cryptography;
+using System.CodeDom;
 
 namespace BankProject
 {
@@ -34,11 +36,7 @@ namespace BankProject
 
         static void Main(string[] args)
         {
-            //int userIndex = bankUsers.Length;
-            //ReadDataFromFile(userIndex);
-            //ReadLine();
-
-            GetSpreadsheet();
+            LoadSpreadsheetData();
             RunSystem();
         }
 
@@ -55,7 +53,22 @@ namespace BankProject
 
             if (accountFound)
             {
-                CheckPassAndRunAccount(user, userIndex);
+                if (bankUsers[userIndex].LockAccountDateTime.AddMinutes(3) < DateTime.Now)
+                {
+                    CheckPassAndRunAccount(user, userIndex);
+                }
+                else
+                {
+                    // Block new login attempt after 3 minutes
+                    Clear();
+                    TimeSpan lockCounter = bankUsers[userIndex].LockAccountDateTime.AddMinutes(3) - DateTime.Now;
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("\n\tMax failed attempts.\n".ToUpper());
+                    Console.ResetColor();
+                    Console.WriteLine($"\n\tPlease, wait! You can login again after {SetTimeFormat(lockCounter)}\n");
+                    ReadLine();
+                    RunSystem();
+                }
             }
             else
             {
@@ -68,13 +81,22 @@ namespace BankProject
             }
         }
 
+        static string SetTimeFormat(TimeSpan t)
+        {
+            return string.Format("{0:D2}:{1:D2}:{2:D2}",
+                (int)t.TotalHours,
+                t.Minutes,
+                t.Seconds);
+        }
+
         static void PrintWelcome()
         {
             Console.ForegroundColor = ConsoleColor.DarkCyan;
             Console.WriteLine("\n\t============WELCOME TO BANK XZ!============\n");
             Console.ResetColor();
+
         }
-        static Spreadsheet GetSpreadsheet()
+        static Spreadsheet SaveSpreadsheet()
         {
             // Create new Spreadsheet
             Spreadsheet document = new Spreadsheet();
@@ -83,13 +105,13 @@ namespace BankProject
             // Add new worksheet
             Worksheet sheet = document.Workbook.Worksheets.Add("my_excel");
 
-            int startColum = 0;
+            int startRow = 0;
 
             //set titles in the sheet
-            SetSpreadsheetTitles(sheet, startColum);
+            SetSpreadsheetTitles(sheet, startRow);
 
             //get and set data
-            PrintWorksheetBankAccounts(sheet, startColum);
+            PrintWorksheetUserData(sheet, startRow);
 
 
             if (File.Exists(@".\writeExcelOutput.xlsx"))
@@ -97,7 +119,6 @@ namespace BankProject
                 File.Delete(@".\writeExcelOutput.xlsx");
             }
             document.SaveAs(@".\writeExcelOutput.xlsx");
-            document.Close();
 
             // AutoFit all columns
             sheet.Columns[0].AutoFit();
@@ -105,70 +126,134 @@ namespace BankProject
             sheet.Columns[2].AutoFit();
             sheet.Columns[3].AutoFit();
 
+            document.Close();
+
             return document;
         }
 
         private static void AddAllBorders(Cell cell)
         {
+            //add style spreadsheet
             cell.LeftBorderStyle = Bytescout.Spreadsheet.Constants.LineStyle.Thin;
             cell.RightBorderStyle = Bytescout.Spreadsheet.Constants.LineStyle.Thin;
             cell.TopBorderStyle = Bytescout.Spreadsheet.Constants.LineStyle.Thin;
             cell.BottomBorderStyle = Bytescout.Spreadsheet.Constants.LineStyle.Thin;
         }
 
-        static void PrintWorksheetBankAccounts(Worksheet sheet, int startColum)
+        static void PrintWorksheetUserData(Worksheet sheet, int startRow)
         {
-
+            //add data to spreadsheet
             for (int i = 0; i < bankUsers.Length; i++)
             {
-                sheet.Cell((++startColum), 0).Value = GetBankUserIndexByUserName(bankUsers[i].User);
-                AddAllBorders(sheet.Cell(startColum, 0));
+                //add user index
+                sheet.Cell((++startRow), 0).Value = GetBankUserIndexByUserName(bankUsers[i].User);
+                AddAllBorders(sheet.Cell(startRow, 0));
 
-                sheet.Cell((++startColum), 1).Value = bankUsers[i].User;
-                sheet.Cell(startColum, 1).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
-                AddAllBorders(sheet.Cell(startColum, 1));
+                //add username
+                sheet.Cell(startRow, 1).Value = bankUsers[i].User;
+                sheet.Cell(startRow, 1).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
+                AddAllBorders(sheet.Cell(startRow, 1));
 
-                sheet.Cell((++startColum), 2).Value = bankUsers[i].Password;
-                sheet.Cell(startColum, 2).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
-                AddAllBorders(sheet.Cell(startColum, 2));
+                //add userPass
+                sheet.Cell((startRow), 2).Value = bankUsers[i].Password;
+                sheet.Cell(startRow, 2).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
+                AddAllBorders(sheet.Cell(startRow, 2));
 
+                //add bankAccount Data
                 for (int j = 0; j < bankUsers[i].BankAccounts.Count; j++)
                 {
                     string accountType = bankUsers[i].BankAccounts[j].AccountType;
                     float balance = bankUsers[i].BankAccounts[j].Balance;
-
-                    sheet.Cell((++startColum), 3).Value = accountType;
-                    sheet.Cell(startColum, 3).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
-                    AddAllBorders(sheet.Cell(startColum, 3));
-
-                    sheet.Cell((++startColum), 4).Value = balance;
-                    sheet.Cell(startColum, 4).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
-                    AddAllBorders(sheet.Cell(startColum, 4));
+                    if (accountType.Contains("Savings"))
+                    {
+                        sheet.Cell((startRow), 3).Value = balance;
+                        sheet.Cell(startRow, 3).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
+                        AddAllBorders(sheet.Cell(startRow, 3));
+                    }
+                    if (accountType.Contains("Salary"))
+                    {
+                        sheet.Cell((startRow), 4).Value = balance;
+                        sheet.Cell(startRow, 4).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
+                        AddAllBorders(sheet.Cell(startRow, 4));
+                    }
                 }
             }
         }
 
-        static void SetSpreadsheetTitles(Worksheet sheet, int startColum)
+        static void SetSpreadsheetTitles(Worksheet sheet, int row)
         {
-            sheet.Cell((startColum), 0).Value = $"UserIndex".ToUpper();
-            AddAllBorders(sheet.Cell(startColum, 0));
-            sheet.Cell(startColum, 0).Font = new Font("Arial", 11, FontStyle.Bold);
+            //to set titles spreadsheet
+            sheet.Cell((row), 0).Value = $"UserIndex".ToUpper();
+            AddAllBorders(sheet.Cell(row, 0));
+            sheet.Cell(row, 0).Font = new Font("Arial", 11, FontStyle.Bold);
 
-            sheet.Cell((startColum), 1).Value = $"Username".ToUpper();
-            AddAllBorders(sheet.Cell(startColum, 1));
-            sheet.Cell(startColum, 1).Font = new Font("Arial", 11, FontStyle.Bold);
+            sheet.Cell((row), 1).Value = $"Username".ToUpper();
+            AddAllBorders(sheet.Cell(row, 1));
+            sheet.Cell(row, 1).Font = new Font("Arial", 11, FontStyle.Bold);
 
-            sheet.Cell((startColum), 2).Value = $"UserPass".ToUpper();
-            AddAllBorders(sheet.Cell(startColum, 2));
-            sheet.Cell(startColum, 2).Font = new Font("Arial", 11, FontStyle.Bold);
+            sheet.Cell((row), 2).Value = $"UserPass".ToUpper();
+            AddAllBorders(sheet.Cell(row, 2));
+            sheet.Cell(row, 2).Font = new Font("Arial", 11, FontStyle.Bold);
 
-            sheet.Cell((startColum), 3).Value = $"Account Type".ToUpper();
-            AddAllBorders(sheet.Cell(startColum, 3));
-            sheet.Cell(startColum, 3).Font = new Font("Arial", 11, FontStyle.Bold);
+            sheet.Cell((row), 3).Value = $"Savings".ToUpper();
+            AddAllBorders(sheet.Cell(row, 3));
+            sheet.Cell(row, 3).Font = new Font("Arial", 11, FontStyle.Bold);
 
-            sheet.Cell((startColum), 4).Value = $"Balance".ToUpper();
-            AddAllBorders(sheet.Cell(startColum, 4));
-            sheet.Cell(startColum, 4).Font = new Font("Arial", 11, FontStyle.Bold);
+            sheet.Cell((row), 4).Value = $"Salary".ToUpper();
+            AddAllBorders(sheet.Cell(row, 4));
+            sheet.Cell(row, 4).Font = new Font("Arial", 11, FontStyle.Bold);
+        }
+
+        static void LoadSpreadsheetData()
+        {
+            //to read document and save updated data
+
+            Spreadsheet document = new Spreadsheet();
+            document.LoadFromFile("writeExcelOutput.xlsx");
+
+            // Get first worksheet
+            Worksheet sheet = document.Workbook.Worksheets[0];
+
+            //iterate with spreadsheet rows
+            for (int rowIndex = 1; rowIndex < sheet.NotEmptyRowMax; rowIndex++)
+            {
+                //iterate with spreadsheet columns
+                for (int columnIndex = 0; columnIndex < sheet.NotEmptyRowMax + 1; columnIndex++)
+                {
+                    //get data from titles
+                    string columnTitle = sheet.Cell(0, columnIndex).ValueAsString;
+
+                    //to update data
+                    if (columnTitle == "USERNAME")
+                    {
+                        bankUsers[rowIndex - 1].User = sheet.Cell(rowIndex, columnIndex).ValueAsString;
+                        bankUsers[rowIndex - 1].BankAccounts.Clear();
+                    }
+                    else if (columnTitle == "USERPASS")
+                    {
+                        bankUsers[rowIndex - 1].Password = sheet.Cell(rowIndex, columnIndex).ValueAsString;
+                    }
+                    else if (columnTitle == "SAVINGS")
+                    {
+                        bool hasSavings = sheet.Cell(rowIndex, columnIndex).ValueAsString.Length > 0;
+                        if (hasSavings)
+                        {
+                            float savingsBalance = (float)sheet.Cell(rowIndex, columnIndex).ValueAsDouble;
+                            bankUsers[rowIndex - 1].BankAccounts.Add(new BankAccount("Savings", savingsBalance));
+                        }
+                    }
+                    else if (columnTitle == "SALARY")
+                    {
+                        bool hasSalary = sheet.Cell(rowIndex, columnIndex).ValueAsString.Length > 0;
+                        if (hasSalary)
+                        {
+                            float salaryBalance = (float)sheet.Cell(rowIndex, columnIndex).ValueAsDouble;
+                            bankUsers[rowIndex - 1].BankAccounts.Add(new BankAccount("Salary", salaryBalance));
+                        }
+                    }
+                }
+            }
+            document.Dispose();
         }
         static void CheckPassAndRunAccount(string? user, int userIndex)
         {
@@ -182,21 +267,6 @@ namespace BankProject
                 PrintWelcome();
                 Console.Write("\n\tPassword: \n\t");
                 string? password = Console.ReadLine();
-
-                //Spreadsheet document = GetSpreadsheet();
-                //document.LoadFromFile("writeExcelOutput.xlsx");
-                // Get first worksheet
-                //Worksheet worksheet = document.Workbook.Worksheets[0];
-
-                // Read cell value
-                //Console.WriteLine("Cell (0,0) value: {0}", worksheet.Cell(0, 0).ValueAsString);
-
-                //Cell cell = worksheet.Find(password, false, false, false);
-                //while (cell != null)
-                //{
-                //    cell = worksheet.FindNext();
-                //}
-                //document.Dispose();
 
                 if (bankUsers[userIndex].Password == password)
                 {
@@ -218,43 +288,18 @@ namespace BankProject
                     }
                     else
                     {
-                        //Block new login attempt after 3 minutes
-                        CounterTimeFailedAttempt(countPassAttempts);
+                        //get time to block account from loggin for 3 minutes
+                        bankUsers[userIndex].LockAccountDateTime = DateTime.Now;
+
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("\n\tInvalid password!\n".ToUpper());
+                        Console.ResetColor();
+                        Console.WriteLine($"\n\tFailed Attempts: {countPassAttempts}. You can try again after 3 minutes");
+                        Console.ReadLine();
+                        RunSystem();
                     }
                 }
             }
-        }
-
-        static void CounterTimeFailedAttempt(int countPassAttempts)
-        {
-            int secondsCounter = 180;
-            for (int i = secondsCounter - 1; i <= secondsCounter; i--)
-            {
-                Thread.Sleep(1000);
-                if (i <= 0)
-                {
-                    RunSystem();
-                    break;
-                }
-                else
-                {
-                    Clear();
-                    Console.WriteLine($"\n\tFailed Attempts: {countPassAttempts}");
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("\n\tMax failed attempts.\n".ToUpper());
-                    Console.ResetColor();
-                    Console.WriteLine($"\n\tPlease, wait! The system will automatically restart after {ConvertSecondsIntToTimeFormat(i)}.\n");
-                }
-            }
-        }
-
-        static string ConvertSecondsIntToTimeFormat(int secs)
-        {
-            TimeSpan t = TimeSpan.FromSeconds(secs);
-            return string.Format("{0:D2}:{1:D2}:{2:D2}",
-                (int)t.TotalHours,
-                t.Minutes,
-                t.Seconds);
         }
 
 
@@ -308,7 +353,7 @@ namespace BankProject
                     case 6:
                         /*
                          * only does a simulation with a fixed exchange rate
-                         * The method doesn't do anything directly in the user account
+                         * The method doesn'lockCounter do anything directly in the user account
                         */
                         MenuCurrencyConverterSimulation();
                         break;
@@ -317,8 +362,10 @@ namespace BankProject
                         GoBackMenuOptions();
                         break;
                     case 8:
+                        SaveSpreadsheet();
                         Console.WriteLine("\n\tThanks for your visit!");
                         Thread.Sleep(1000);
+
                         RunSystem();
                         break;
                     default:
@@ -343,7 +390,7 @@ namespace BankProject
             //to get user and bank account
             for (int i = 0; i < bankUsers[userIndex].BankAccounts.Count; i++)
             {
-                //show balance accounts and types
+                ///show balance accounts and types
                 var accountBalance = bankUsers[userIndex].BankAccounts[i].Balance;
                 var accountType = bankUsers[userIndex].BankAccounts[i].AccountType;
 
@@ -511,10 +558,10 @@ namespace BankProject
                 //    var targetAccountType = bankUsers[targetUserIndex].BankAccounts[i].AccountType;
 
                 //    Console.WriteLine($"\n\tHi {bankUsers[userIndex].User.ToUpper()}!\n");
-                //    Console.WriteLine($"\n\t{accountType}: {accountBalance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n");
+                //    Console.WriteLine($"\n\lockCounter{accountType}: {accountBalance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n");
 
                 //    Console.WriteLine($"\n\tHi {bankUsers[targetUserIndex].User.ToUpper()}!\n");
-                //    Console.WriteLine($"\n\t{targetAccountType}: {targetAccountBalance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n");
+                //    Console.WriteLine($"\n\lockCounter{targetAccountType}: {targetAccountBalance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n");
 
                 //}
             }
@@ -611,7 +658,7 @@ namespace BankProject
             if (passwordNewOne != null)
             {
                 bankUsers[userIndex].Password = passwordNewOne;
-                GetSpreadsheet();
+                SaveSpreadsheet();
                 ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("\n\tthe password was successfully changed!\n".ToUpper());
                 ResetColor();

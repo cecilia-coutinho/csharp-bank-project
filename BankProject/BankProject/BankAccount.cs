@@ -11,6 +11,8 @@ namespace BankProject
         public string User { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
 
+        public DateTime LockAccountDateTime { get; set; }
+
         public List<BankAccount> BankAccounts { get; set; }
 
         public BankUser(string user, string password, List<BankAccount> bankAccounts)
