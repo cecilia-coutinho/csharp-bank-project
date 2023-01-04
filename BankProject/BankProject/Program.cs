@@ -13,6 +13,8 @@ namespace BankProject
 {
     internal class Program
     {
+        // users data declared as a static variable of the class
+        // can be accessed from any method or class within the namespace
         static BankUser[] bankUsers = {
             new BankUser("maria", "1234", new List<BankAccount>{new BankAccount("Savings", 1000), new BankAccount("Salary", 100) }),
             new BankUser("pedro", "1234", new List<BankAccount>{new BankAccount("Savings", 100) }),
@@ -20,9 +22,9 @@ namespace BankProject
             new BankUser("johan", "1234", new List < BankAccount >{new BankAccount("Salary", 0) }),
             new BankUser("matias", "1234", new List < BankAccount >{new BankAccount("Savings", 0), new BankAccount("Salary", 0) }) };
 
-        //to get index of array of each user
         static int GetBankUserIndexByUserName(string? user)
         {
+            //to get index of array of each user
             for (int i = 0; i < bankUsers.Length; i++)
             {
                 if (bankUsers[i].User == user)
@@ -31,35 +33,40 @@ namespace BankProject
                 }
             }
 
-            return -1; //false
+            return -1; //invalid index (if user not found)
         }
 
         static void Main(string[] args)
         {
-            LoadSpreadsheetData();
+            LoadSpreadsheetData(); //check the data from the file that saves it (that way modified data is not reset once the program is restarted)
             RunSystem();
+            SaveSpreadsheet(); //save modified data to spreadsheet
         }
 
         static void RunSystem()
         {
             Clear();
-            PrintWelcome();
+            PrintWelcome(); //welcome text
             Console.Write("\n\tUser: \n\t");
-            string? user = Console.ReadLine()?.ToLower();
+            string? user = Console.ReadLine()?.ToLower(); //get username input
 
             int userIndex = GetBankUserIndexByUserName(user); //get user index
 
-            bool accountFound = userIndex != -1;
+            bool accountFound = userIndex != -1; //check if exists (return true if user index is valid)
 
             if (accountFound)
             {
+                //if the user is found and not locked with failed password attempts:
                 if (bankUsers[userIndex].LockAccountDateTime.AddMinutes(3) < DateTime.Now)
                 {
-                    CheckPassAndRunAccount(user, userIndex);
+                    CheckPassAndRunAccount(user, userIndex); //check passwaord before run program with menu options
                 }
                 else
                 {
-                    // Block new login attempt after 3 minutes
+                    /*
+                     * if there were failed attempts
+                     * Block new login attempt after 3 minutes
+                    */
                     Clear();
                     TimeSpan lockCounter = bankUsers[userIndex].LockAccountDateTime.AddMinutes(3) - DateTime.Now;
                     Console.ForegroundColor = ConsoleColor.Red;
@@ -72,6 +79,7 @@ namespace BankProject
             }
             else
             {
+                //if the user is NOT found 
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("\n\tInvalid username\n".ToUpper());
                 Console.ResetColor();
@@ -83,6 +91,7 @@ namespace BankProject
 
         static string SetTimeFormat(TimeSpan t)
         {
+            //to format remaining time shown in the failed attempts message when user try login before 3 min
             return string.Format("{0:D2}:{1:D2}:{2:D2}",
                 (int)t.TotalHours,
                 t.Minutes,
@@ -91,6 +100,7 @@ namespace BankProject
 
         static void PrintWelcome()
         {
+            //welcome message
             Console.ForegroundColor = ConsoleColor.DarkCyan;
             Console.WriteLine("\n\t============WELCOME TO BANK XZ!============\n");
             Console.ResetColor();
@@ -100,12 +110,12 @@ namespace BankProject
         {
             // Create new Spreadsheet
             Spreadsheet document = new Spreadsheet();
-            document.Workbook.DefaultFont = new SpreadsheetFont("Arial", 10);
+            document.Workbook.DefaultFont = new SpreadsheetFont("Arial", 10); //font format
 
             // Add new worksheet
-            Worksheet sheet = document.Workbook.Worksheets.Add("my_excel");
+            Worksheet sheet = document.Workbook.Worksheets.Add("my_excel"); //create new tab in the document
 
-            int startRow = 0;
+            int startRow = 0; //rows counter
 
             //set titles in the sheet
             SetSpreadsheetTitles(sheet, startRow);
@@ -113,7 +123,7 @@ namespace BankProject
             //get and set data
             PrintWorksheetUserData(sheet, startRow);
 
-
+            //check if the file exists, replace and save it
             if (File.Exists(@".\writeExcelOutput.xlsx"))
             {
                 File.Delete(@".\writeExcelOutput.xlsx");
@@ -133,7 +143,7 @@ namespace BankProject
 
         private static void AddAllBorders(Cell cell)
         {
-            //add style spreadsheet
+            //add style to spreadsheet
             cell.LeftBorderStyle = Bytescout.Spreadsheet.Constants.LineStyle.Thin;
             cell.RightBorderStyle = Bytescout.Spreadsheet.Constants.LineStyle.Thin;
             cell.TopBorderStyle = Bytescout.Spreadsheet.Constants.LineStyle.Thin;
@@ -159,11 +169,12 @@ namespace BankProject
                 sheet.Cell(startRow, 2).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
                 AddAllBorders(sheet.Cell(startRow, 2));
 
-                //add bankAccount Data
+                //add bankAccount Data (balance of each account type)
                 for (int j = 0; j < bankUsers[i].BankAccounts.Count; j++)
                 {
                     string accountType = bankUsers[i].BankAccounts[j].AccountType;
                     float balance = bankUsers[i].BankAccounts[j].Balance;
+
                     if (accountType.Contains("Savings"))
                     {
                         sheet.Cell((startRow), 3).Value = balance;
@@ -182,7 +193,7 @@ namespace BankProject
 
         static void SetSpreadsheetTitles(Worksheet sheet, int row)
         {
-            //to set titles spreadsheet
+            //to set titles to the spreadsheet
             sheet.Cell((row), 0).Value = $"UserIndex".ToUpper();
             AddAllBorders(sheet.Cell(row, 0));
             sheet.Cell(row, 0).Font = new Font("Arial", 11, FontStyle.Bold);
@@ -206,7 +217,7 @@ namespace BankProject
 
         static void LoadSpreadsheetData()
         {
-            //to read document and save updated data
+            //to read document and get updated data from spreadsheet
 
             Spreadsheet document = new Spreadsheet();
             document.LoadFromFile("writeExcelOutput.xlsx");
@@ -223,7 +234,7 @@ namespace BankProject
                     //get data from titles
                     string columnTitle = sheet.Cell(0, columnIndex).ValueAsString;
 
-                    //to update data
+                    //to get updated data from spreadsheet
                     if (columnTitle == "USERNAME")
                     {
                         bankUsers[rowIndex - 1].User = sheet.Cell(rowIndex, columnIndex).ValueAsString;
@@ -257,17 +268,20 @@ namespace BankProject
         }
         static void CheckPassAndRunAccount(string? user, int userIndex)
         {
-            int maxInvalidPassAttempts = 3;
-            int countPassAttempts;
+            //to check password before run menu
+            int maxInvalidPassAttempts = 3; //max number of failed attempts
+            int countPassAttempts; //failed attempts counter
 
+            //while the user attempts are less than max failed attempts
             for (countPassAttempts = 1; countPassAttempts <= maxInvalidPassAttempts; countPassAttempts++)
             {
                 Clear();
 
                 PrintWelcome();
                 Console.Write("\n\tPassword: \n\t");
-                string? password = Console.ReadLine();
+                string? password = Console.ReadLine(); //password input
 
+                //check if password is correct. if so, run menu options
                 if (bankUsers[userIndex].Password == password)
                 {
                     RunMenu(user, password, userIndex);
@@ -277,6 +291,7 @@ namespace BankProject
                 {
                     //max attempts failed password
 
+                    //user can try again if failed attempts are less than 3
                     if (countPassAttempts < maxInvalidPassAttempts)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
@@ -288,9 +303,11 @@ namespace BankProject
                     }
                     else
                     {
-                        //get time to block account from loggin for 3 minutes
+                        //block user from loggin for 3 minutes after 3 failed attempts
+                        //get time from last failed attempts after 3 times failed to block user
                         bankUsers[userIndex].LockAccountDateTime = DateTime.Now;
 
+                        //show message to the user
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("\n\tInvalid password!\n".ToUpper());
                         Console.ResetColor();
@@ -305,6 +322,7 @@ namespace BankProject
 
         static void RunMenu(string? user, string? pass, int userIndex)
         {
+            //to run menu options
             bool runLoginMenu = true;
             while (runLoginMenu)
             {
@@ -353,7 +371,7 @@ namespace BankProject
                     case 6:
                         /*
                          * only does a simulation with a fixed exchange rate
-                         * The method doesn'lockCounter do anything directly in the user account
+                         * The method doesn't do anything directly in the user account
                         */
                         MenuCurrencyConverterSimulation();
                         break;
@@ -362,11 +380,11 @@ namespace BankProject
                         GoBackMenuOptions();
                         break;
                     case 8:
-                        SaveSpreadsheet();
+                        SaveSpreadsheet(); //save data in the database when logout
                         Console.WriteLine("\n\tThanks for your visit!");
                         Thread.Sleep(1000);
 
-                        RunSystem();
+                        RunSystem(); //come back to login option
                         break;
                     default:
                         Console.Clear();
@@ -382,6 +400,7 @@ namespace BankProject
 
         static void ViewAccountsAndBalance(int userIndex)
         {
+            //to see accounts the user has and money amount
             Clear();
             Console.WriteLine("\n=============BALANCE=============");
             Console.ForegroundColor = ConsoleColor.DarkCyan;
@@ -401,24 +420,26 @@ namespace BankProject
         }
         static void MakeDeposit(int userIndex)
         {
+            //to make a deposit
             Clear();
             Console.Write("\n\tHow much $$ do you want to deposit? ");
             string? deposit = Console.ReadLine();
             float depositAmount;
             float.TryParse(deposit, out depositAmount);
 
-            int userChoiceAccount = SelectAccount(userIndex);
-            int goBackOption = GetGoBackOption(userIndex);
+            int userChoiceAccount = SelectAccount(userIndex); //to select type of account to make deposit
+            int goBackOption = GetGoBackOption(userIndex); //option to go back
 
-            bool userChoiceAccountIsValid = userChoiceAccount != -1;
+            bool userChoiceAccountIsValid = userChoiceAccount != -1; //boolean to check option input for account's type
 
 
             if (depositAmount <= 0)
             {
-                NegativeAmount();
+                NegativeAmount(); //show message if the amount has a negative value
             }
             else if (userChoiceAccountIsValid)
             {
+                //to add the amount in the acount
                 bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance += depositAmount;
                 ViewAccountsAndBalance(userIndex);
             }
@@ -426,28 +447,30 @@ namespace BankProject
 
         static void WithdrawMoney(int userIndex)
         {
+            //to withdraw money
             Clear();
             Console.Write("How much $$ do you want to withdraw? ");
             string? withdraw = Console.ReadLine();
             float withdrawAmount;
             float.TryParse(withdraw, out withdrawAmount);
 
-            int userChoiceAccount = SelectAccount(userIndex);
-            int goBackOption = GetGoBackOption(userIndex);
-            bool userChoiceAccountIsValid = userChoiceAccount != -1;
+            int userChoiceAccount = SelectAccount(userIndex); //menu options with accounts' type
+            int goBackOption = GetGoBackOption(userIndex); //go back option
+            bool userChoiceAccountIsValid = userChoiceAccount != -1; //boolean to check option input for account's type
 
             if (withdrawAmount <= 0)
             {
-                NegativeAmount();
+                NegativeAmount(); //show message if the amount has a negative value
             }
             else if (userChoiceAccountIsValid)
             {
                 Console.Write("\n\tENTER your Password: \n\t");
-                string? password = Console.ReadLine();
+                string? password = Console.ReadLine(); //get pass to confirm transaction
 
-
+                //check pass
                 if (bankUsers[userIndex].Password == password)
                 {
+                    //to add the amount in the acount
                     var accountBalance = bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance;
 
                     if (withdrawAmount <= accountBalance)
@@ -458,20 +481,21 @@ namespace BankProject
                 }
                 else
                 {
-                    Console.WriteLine("\n\tYou don't have enough money");
+                    Console.WriteLine("\n\tYou don't have enough money"); // if the amount is higher than money that user has
                 }
             }
         }
 
         static void TransferBtwAccounts(int userIndex)
         {
+            //to transfer between different accounts and users
             Clear();
             Console.Write("\n\tTo whom do you want to transfer?: ");
-            string? transferTo = Console.ReadLine();
+            string? transferTo = Console.ReadLine(); //input to get username target to transfer to
 
-            int targetUserIndex = GetBankUserIndexByUserName(transferTo);
+            int targetUserIndex = GetBankUserIndexByUserName(transferTo); //get input/target index
 
-            bool accountTargetFound = targetUserIndex != -1;
+            bool accountTargetFound = targetUserIndex != -1; //check if input/target index exists
 
             if (accountTargetFound)
             {
@@ -480,17 +504,18 @@ namespace BankProject
                 Console.WriteLine($"\n\tselect type of account to transfer from:\n");
                 Console.ResetColor();
 
-                int userChoiceAccount = SelectAccount(userIndex);
+                int userChoiceAccount = SelectAccount(userIndex); //options with account types
                 //int goBackOption = GetGoBackOption(userIndex);
 
                 Console.WriteLine($"\n\tselect type of account to transfer to:\n");
 
-                int targetUserChoiceAccount = SelectAccount(targetUserIndex);
+                int targetUserChoiceAccount = SelectAccount(targetUserIndex); //options with target account types
 
-                bool invalidUserChoiceAccount = userChoiceAccount == -1;
+                bool invalidUserChoiceAccount = userChoiceAccount == -1; //check if not exists
 
                 if (!invalidUserChoiceAccount)
                 {
+                    //if exists
                     ForegroundColor = ConsoleColor.Green;
                     Console.Write("\n\tHow much $$ do you want to transfer? ");
                     string? transfer = Console.ReadLine();
@@ -500,10 +525,11 @@ namespace BankProject
 
                     if (transferAmount <= 0)
                     {
-                        NegativeAmount();
+                        NegativeAmount(); //message for negative amount
                     }
                     else if (bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance < transferAmount)
                     {
+                        //message when amount is higher than money available
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("\n\tERROR! Not allowed. You don't have enough money");
                         ResetColor();
@@ -514,34 +540,34 @@ namespace BankProject
                     }
                     else
                     {
-
-                        //add pin to confirm transaction
+                        /* enough amount money available in the account
+                         * add pin to confirm transaction
+                         */
 
                         Console.Write("\n\tENTER your Password: \n\t");
                         string? password = Console.ReadLine();
 
-
+                        //check pass
                         if (bankUsers[userIndex].Password == password)
                         {
                             Clear();
-                            //targetUserChoiceAccount = SelectAccount(targetUserIndex);
                             bool invalidTargetUserChoiceAccount = targetUserChoiceAccount == -1;
 
                             if (!invalidTargetUserChoiceAccount)
                             {
+                                //update account values in user and target
                                 bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance -= transferAmount;
                                 bankUsers[targetUserIndex].BankAccounts[targetUserChoiceAccount].Balance += transferAmount;
 
-                                ViewAccountsAndBalance(userIndex);
+                                ViewAccountsAndBalance(userIndex); //show user money updated
                             }
-
                         }
                         else
                         {
+                            //wrong password
                             ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("Transaction not allowed. Check your password!");
                             ResetColor();
-                            //InvalidOption();
                         }
                     }
 
@@ -567,6 +593,7 @@ namespace BankProject
             }
             else
             {
+                //wrong target
                 ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("\n\tInvalid User".ToUpper());
                 ResetColor();
@@ -575,6 +602,7 @@ namespace BankProject
 
         static void CreateNewAccount(int userIndex)
         {
+            //to create a new account
             //all bank accounts
             List<string> allAccountTypes = new List<string>();
             allAccountTypes.Add("Savings");
@@ -635,11 +663,12 @@ namespace BankProject
                     }
                     else
                     {
-                        InvalidOption();
+                        InvalidOption(); //message for invalid option input
                     }
                 }
                 else
                 {
+                    //when user has all the accounts already
                     Clear();
                     ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine("\n\t You already have all available accounts\n");
@@ -652,11 +681,13 @@ namespace BankProject
 
         static void ChangePassword(int userIndex)
         {
+            //to change password
             Clear();
             Console.Write("\n\tType your new Password: ");
-            string? passwordNewOne = Console.ReadLine();
+            string? passwordNewOne = Console.ReadLine(); //get new pass
             if (passwordNewOne != null)
             {
+                //to update data
                 bankUsers[userIndex].Password = passwordNewOne;
                 SaveSpreadsheet();
                 ForegroundColor = ConsoleColor.Green;
@@ -665,6 +696,7 @@ namespace BankProject
             }
             else
             {
+                //message to catch a null input
                 ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("\n\tERROR! Password could not be changed");
                 ResetColor();
@@ -673,6 +705,11 @@ namespace BankProject
 
         static bool MenuCurrencyConverterSimulation()
         {
+            /*
+             * only does a simulation with a fixed exchange rate
+             * The method doesn't do anything directly in the user account
+            */
+
             Clear();
             Console.WriteLine("\n\tTo which currency do you want to convert?\n\tPlease select one of the options below:");
             Console.WriteLine("\n\t1. From SEK to Dollar\n" +
@@ -710,6 +747,7 @@ namespace BankProject
 
         static void GetCurrencyConvertToDollar()
         {
+            //calling method from a class and setting variables
             Clear();
             Console.Write("\n\tHow much SEK do you want to Convert: ");
             float currencyAmount;
@@ -720,6 +758,7 @@ namespace BankProject
 
         static void GetCurrencyConvertToEuro()
         {
+            //calling method from a class and setting variables
             Clear();
             Console.Write("\n\tHow much SEK do you want to Convert: ");
             float currencyAmount;
@@ -730,19 +769,13 @@ namespace BankProject
 
         static void GoBackMenuOptions()
         {
+            //option to go back to the main menu
             Console.WriteLine("\n\tPress ENTER to go back to the menu.\n");
             Console.ReadLine();
         }
-
-        ///static void NewBalance(int userIndex)
-        //{
-        //    Clear();
-        //    Console.WriteLine("\n=============Balance Updated=============");
-        //    ViewAccountsAndBalance(userIndex);
-        //}
-
         static void InvalidOption()
         {
+            // message for invalid option
             ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("\n\tERROR: Invalid Option!".ToUpper());
             ResetColor();
@@ -750,6 +783,7 @@ namespace BankProject
 
         static void NegativeAmount()
         {
+            //message for negative amount input
             ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("\n\tERROR! Transaction not allowed." +
                 "\n\tThe Amount needs to be valid or higher than 0,00".ToUpper());
@@ -758,8 +792,10 @@ namespace BankProject
 
         static int SelectAccount(int userIndex)
         {
+            //menu option to show account types
             Console.WriteLine($"\n\tselect account:\n");
 
+            //to get account types
             for (int i = 0; i < bankUsers[userIndex].BankAccounts.Count; i++)
             {
                 var accountType = bankUsers[userIndex].BankAccounts[i].AccountType;
@@ -769,7 +805,7 @@ namespace BankProject
                 Console.WriteLine($"\n\t{menuNumber + 1}. {accountType}\n");
 
             }
-            var goBackOption = GetGoBackOption(userIndex);
+            var goBackOption = GetGoBackOption(userIndex); //option to go back
 
             Console.WriteLine($"\n\t{goBackOption + 1}. Go Back\n");
             Console.Write("\t");
@@ -796,6 +832,7 @@ namespace BankProject
 
         static int GetGoBackOption(int userIndex)
         {
+            //to go back when showing menu account's option
             return bankUsers[userIndex].BankAccounts.Count;
         }
     }
