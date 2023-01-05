@@ -432,10 +432,12 @@ namespace BankProject
         {
             //to make a deposit
             Clear();
-            Console.WriteLine("\n\tHow much $$ do you want to deposit?\n");
-            WriteLine("\n\tPlease, type enter in 2-digit format, ex: 00,00\n" +
+            WriteLine("\n\t****Please, type enter in 2-digit format, ex: 00,00 ****\n" +
                 "\n\t****Note: if you enter more than 2 digits it will be converted to 2 digits****\n");
-            Write("\n\tType Amount ======> ");
+            ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("\n\tHow much $$ do you want to deposit?\n");
+            Write("\n\t======> ");
+            ResetColor();
             string? deposit = Console.ReadLine();
             int? decimalPointIndex = deposit?.IndexOf('.');
 
@@ -462,8 +464,13 @@ namespace BankProject
             }
             else
             {
-                WriteLine("\n\tPlease enter an amount in whole SEKs or with cents\n" +
+                ForegroundColor = ConsoleColor.Red;
+                WriteLine("\n\tPlease enter an amount in whole SEK or with cents\n" +
                     "\n\tEx: 100 or 100,54\n");
+                ResetColor();
+                WriteLine("\n\t Press ENTER to try again");
+                ReadLine();
+                MakeDeposit(userIndex);
             }
 
         }
@@ -472,45 +479,67 @@ namespace BankProject
         {
             // to withdraw money
             Clear();
+            WriteLine("\n\t****Please, enter in whole SEK format, ex: 00 **** \n" +
+                "\n\t****Note:it's not possible withdraw cents****\n");
+            ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("\n\tHow much $$ do you want to withdraw?");
-            WriteLine("\n\tPlease, type enter in 2-digit format, ex: 00,00\n" +
-                "\n\t****Note: if you enter more than 2 digits it will be converted to 2 digits****\n");
             Write("\n\tType Amount ======> ");
+            ResetColor();
 
             string? withdraw = Console.ReadLine();
-            double withdrawAmount;
-            double.TryParse(withdraw, out withdrawAmount);
+            int? decimalPointIndex = withdraw?.IndexOf('.');
 
-            int userChoiceAccount = SelectAccount(userIndex); //menu options with accounts' type
-            int goBackOption = GetGoBackOption(userIndex); //go back option
-            bool userChoiceAccountIsValid = userChoiceAccount != -1; //boolean to check option input for account's type
-
-            if (withdrawAmount <= 0)
+            if (decimalPointIndex == -1)
             {
-                NegativeAmount(); //show message if the amount has a negative value
-            }
-            else if (userChoiceAccountIsValid)
-            {
-                Console.Write("\n\tENTER your Password: \n\t");
-                string? password = Console.ReadLine(); //get pass to confirm transaction
 
-                //check pass
-                if (bankUsers[userIndex].Password == password)
+                int withdrawAmount;
+                int.TryParse(withdraw, out withdrawAmount);
+
+                int userChoiceAccount = SelectAccount(userIndex); //menu options with accounts' type
+                int goBackOption = GetGoBackOption(userIndex); //go back option
+                bool userChoiceAccountIsValid = userChoiceAccount != -1; //boolean to check option input for account's type
+
+                if (withdrawAmount <= 0)
                 {
-                    //to add the amount in the acount
-                    var accountBalance = bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance;
+                    NegativeAmount(); //show message if the amount has a negative value
+                    ForegroundColor = ConsoleColor.Red;
+                    WriteLine("\n\tNOTE: YOU CAN NOT WITHDRAW CENTS ONLY THE WHOLE SEK");
+                    ResetColor();
+                }
+                else if (userChoiceAccountIsValid)
+                {
+                    Console.Write("\n\tENTER your Password: \n\t");
+                    string? password = Console.ReadLine(); //get pass to confirm transaction
 
-                    if (withdrawAmount <= accountBalance)
+                    //check pass
+                    if (bankUsers[userIndex].Password == password)
                     {
-                        bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance -= withdrawAmount;
-                        ViewAccountsAndBalance(userIndex);
+                        //to add the amount in the acount
+                        var accountBalance = bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance;
+
+                        if (withdrawAmount <= accountBalance)
+                        {
+                            bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance -= withdrawAmount;
+                            ViewAccountsAndBalance(userIndex);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("\n\tYou don't have enough money"); // if the amount is higher than money that user has
                     }
                 }
-                else
-                {
-                    Console.WriteLine("\n\tYou don't have enough money"); // if the amount is higher than money that user has
-                }
             }
+            else
+            {
+                ForegroundColor = ConsoleColor.Red;
+                WriteLine("\n\tPlease enter an amount in whole SEK\n" +
+                    "\n\tEx: 100\n");
+                ResetColor();
+                WriteLine("\n\t Press ENTER to try again");
+                ReadLine();
+                WithdrawMoney(userIndex);
+            }
+
         }
 
         static void TransferBtwAccounts(int userIndex)
@@ -544,64 +573,78 @@ namespace BankProject
                 {
                     //if exists
                     Clear();
-                    ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine("\n\tHow much $$ do you want to transfer?");
                     WriteLine("\n\tPlease, type enter in 2-digit format, ex: 00,00\n" +
                         "\n\t****Note: if you enter more than 2 digits it will be converted to 2 digits****\n");
+                    ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("\n\tHow much $$ do you want to transfer?");
                     Write("\n\tType Amount ======> ");
                     ResetColor();
                     string? transfer = Console.ReadLine();
-                    double transferAmount;
-                    double.TryParse(transfer, out transferAmount);
+                    int? decimalPointIndex = transfer?.IndexOf('.');
 
-                    if (transferAmount <= 0)
+                    if (decimalPointIndex == -1)
                     {
-                        NegativeAmount(); //message for negative amount
-                    }
-                    else if (bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance < transferAmount)
-                    {
-                        //message when amount is higher than money available
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("\n\tERROR! Not allowed. You don't have enough money");
-                        ResetColor();
-                        Console.WriteLine("\n\tPress ENTER to see your Balance");
-                        Console.ReadLine();
-                        ViewAccountsAndBalance(userIndex);
+                        double transferAmount;
+                        double.TryParse(transfer, out transferAmount);
 
-                    }
-                    else
-                    {
-                        /* enough amount money available in the account
-                         * add pin to confirm transaction
-                         */
-
-                        Console.Write("\n\tENTER your Password: \n\t");
-                        string? password = Console.ReadLine();
-
-                        //check pass
-                        if (bankUsers[userIndex].Password == password)
+                        if (transferAmount <= 0)
                         {
-                            Clear();
-                            bool invalidTargetUserChoiceAccount = targetUserChoiceAccount == -1;
+                            NegativeAmount(); //message for negative amount
+                        }
+                        else if (bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance < transferAmount)
+                        {
+                            //message when amount is higher than money available
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine("\n\tERROR! Not allowed. You don't have enough money");
+                            ResetColor();
+                            Console.WriteLine("\n\tPress ENTER to see your Balance");
+                            Console.ReadLine();
+                            ViewAccountsAndBalance(userIndex);
 
-                            if (!invalidTargetUserChoiceAccount)
-                            {
-                                //update account values in user and target
-                                bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance -= transferAmount;
-                                bankUsers[targetUserIndex].BankAccounts[targetUserChoiceAccount].Balance += transferAmount;
-
-                                ViewAccountsAndBalance(userIndex); //show user money updated
-                            }
                         }
                         else
                         {
-                            //wrong password
-                            ForegroundColor = ConsoleColor.Red;
-                            Console.WriteLine("Transaction not allowed. Check your password!");
-                            ResetColor();
+                            /* enough amount money available in the account
+                             * add pin to confirm transaction
+                             */
+
+                            Console.Write("\n\tENTER your Password: \n\t");
+                            string? password = Console.ReadLine();
+
+                            //check pass
+                            if (bankUsers[userIndex].Password == password)
+                            {
+                                Clear();
+                                bool invalidTargetUserChoiceAccount = targetUserChoiceAccount == -1;
+
+                                if (!invalidTargetUserChoiceAccount)
+                                {
+                                    //update account values in user and target
+                                    bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance -= transferAmount;
+                                    bankUsers[targetUserIndex].BankAccounts[targetUserChoiceAccount].Balance += transferAmount;
+
+                                    ViewAccountsAndBalance(userIndex); //show user money updated
+                                }
+                            }
+                            else
+                            {
+                                //wrong password
+                                ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("Transaction not allowed. Check your password!");
+                                ResetColor();
+                            }
                         }
                     }
-
+                    else
+                    {
+                        ForegroundColor = ConsoleColor.Red;
+                        WriteLine("\n\tPlease enter an amount in whole SEK or with cents\n" +
+                            "\n\tEx: 100 or 100,54\n");
+                        ResetColor();
+                        WriteLine("\n\t Press ENTER to try again");
+                        ReadLine();
+                        TransferBtwAccounts(userIndex);
+                    }
                 }
 
                 ////PRINT TO CHECK TRANSFER (both users)
