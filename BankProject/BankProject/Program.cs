@@ -8,6 +8,7 @@ using static System.Console; //to simplify Console references
 using System.Reflection.Metadata;
 using System.Security.Cryptography;
 using System.CodeDom;
+using System.Reflection.Metadata.Ecma335;
 
 namespace BankProject
 {
@@ -173,19 +174,24 @@ namespace BankProject
                 for (int j = 0; j < bankUsers[i].BankAccounts.Count; j++)
                 {
                     string accountType = bankUsers[i].BankAccounts[j].AccountType;
-                    float balance = bankUsers[i].BankAccounts[j].Balance;
+                    double balance = bankUsers[i].BankAccounts[j].Balance;
 
                     if (accountType.Contains("Savings"))
                     {
-                        //convert balance in 2-digits for currency type
-                        sheet.Cell((startRow), 3).Value = balance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"));
+                        // convert balance in 2-digits
+                        double twoDigitsBalance;
+                        double.TryParse(String.Format("{0:0.00}", balance), out twoDigitsBalance);
+                        sheet.Cell((startRow), 3).Value = twoDigitsBalance;
+
                         sheet.Cell(startRow, 3).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
                         AddAllBorders(sheet.Cell(startRow, 3));
                     }
                     if (accountType.Contains("Salary"))
                     {
-                        //convert balance in 2-digits for currency type
-                        sheet.Cell((startRow), 4).Value = balance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"));
+                        // convert balance in 2-digits
+                        double twoDigitsBalance;
+                        double.TryParse(String.Format("{0:0.00}", balance), out twoDigitsBalance);
+                        sheet.Cell((startRow), 4).Value = twoDigitsBalance;
                         sheet.Cell(startRow, 4).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
                         AddAllBorders(sheet.Cell(startRow, 4));
                     }
@@ -195,7 +201,7 @@ namespace BankProject
 
         static void SetSpreadsheetTitles(Worksheet sheet, int row)
         {
-            //to set titles to the spreadsheet
+            // to set titles to the spreadsheet
             sheet.Cell((row), 0).Value = $"UserIndex".ToUpper();
             AddAllBorders(sheet.Cell(row, 0));
             sheet.Cell(row, 0).Font = new Font("Arial", 11, FontStyle.Bold);
@@ -233,7 +239,7 @@ namespace BankProject
                 //iterate with spreadsheet columns
                 for (int columnIndex = 0; columnIndex < sheet.NotEmptyRowMax + 1; columnIndex++)
                 {
-                    //get data from titles
+                    // get data from titles
                     string columnTitle = sheet.Cell(0, columnIndex).ValueAsString;
 
                     //to get updated data from spreadsheet
@@ -251,8 +257,7 @@ namespace BankProject
                         bool hasSavings = sheet.Cell(rowIndex, columnIndex).ValueAsString.Length > 0;
                         if (hasSavings)
                         {
-                            float savingsBalance;
-                            float.TryParse(sheet.Cell(rowIndex, columnIndex).ToString(), out savingsBalance);
+                            double savingsBalance = sheet.Cell(rowIndex, columnIndex).ValueAsDouble;
                             bankUsers[rowIndex - 1].BankAccounts.Add(new BankAccount("Savings", savingsBalance));
                         }
                     }
@@ -261,8 +266,7 @@ namespace BankProject
                         bool hasSalary = sheet.Cell(rowIndex, columnIndex).ValueAsString.Length > 0;
                         if (hasSalary)
                         {
-                            float salaryBalance;
-                            float.TryParse(sheet.Cell(rowIndex, columnIndex).ToString(), out salaryBalance);
+                            double salaryBalance = sheet.Cell(rowIndex, columnIndex).ValueAsDouble;
                             bankUsers[rowIndex - 1].BankAccounts.Add(new BankAccount("Salary", salaryBalance));
                         }
                     }
@@ -272,7 +276,7 @@ namespace BankProject
         }
         static void CheckPassAndRunAccount(string? user, int userIndex)
         {
-            //to check password before run menu
+            // to check password before run menu
             int maxInvalidPassAttempts = 3; //max number of failed attempts
             int countPassAttempts; //failed attempts counter
 
@@ -404,7 +408,7 @@ namespace BankProject
 
         static void ViewAccountsAndBalance(int userIndex)
         {
-            //to see accounts the user has and money amount
+            // to see accounts the user has and money amount
             Clear();
             Console.WriteLine("\n=============BALANCE=============");
             Console.ForegroundColor = ConsoleColor.DarkCyan;
@@ -433,30 +437,40 @@ namespace BankProject
                 "\n\t****Note: if you enter more than 2 digits it will be converted to 2 digits****\n");
             Write("\n\tType Amount ======> ");
             string? deposit = Console.ReadLine();
-            float depositAmount;
-            float.TryParse(deposit, out depositAmount);
+            int? decimalPointIndex = deposit?.IndexOf('.');
 
-            int userChoiceAccount = SelectAccount(userIndex); //to select type of account to make deposit
-            int goBackOption = GetGoBackOption(userIndex); //option to go back
-
-            bool userChoiceAccountIsValid = userChoiceAccount != -1; //boolean to check option input for account's type
-
-
-            if (depositAmount <= 0)
+            if (decimalPointIndex == -1)
             {
-                NegativeAmount(); //show message if the amount has a negative value
+                double depositAmount;
+                double.TryParse(deposit, out depositAmount);
+
+                int userChoiceAccount = SelectAccount(userIndex); //to select type of account to make deposit
+                int goBackOption = GetGoBackOption(userIndex); //option to go back
+
+                bool userChoiceAccountIsValid = userChoiceAccount != -1; //boolean to check option input for account's type
+
+                if (depositAmount <= 0)
+                {
+                    NegativeAmount(); //show message if the amount has a negative value
+                }
+                else if (userChoiceAccountIsValid)
+                {
+                    // to add the amount in the acount
+                    bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance += depositAmount;
+                    ViewAccountsAndBalance(userIndex);
+                }
             }
-            else if (userChoiceAccountIsValid)
+            else
             {
-                //to add the amount in the acount
-                bankUsers[userIndex].BankAccounts[userChoiceAccount].Balance += depositAmount;
-                ViewAccountsAndBalance(userIndex);
+                WriteLine("\n\tPlease enter an amount in whole SEKs or with cents\n" +
+                    "\n\tEx: 100 or 100,54\n");
             }
+
         }
 
         static void WithdrawMoney(int userIndex)
         {
-            //to withdraw money
+            // to withdraw money
             Clear();
             Console.WriteLine("\n\tHow much $$ do you want to withdraw?");
             WriteLine("\n\tPlease, type enter in 2-digit format, ex: 00,00\n" +
@@ -464,8 +478,8 @@ namespace BankProject
             Write("\n\tType Amount ======> ");
 
             string? withdraw = Console.ReadLine();
-            float withdrawAmount;
-            float.TryParse(withdraw, out withdrawAmount);
+            double withdrawAmount;
+            double.TryParse(withdraw, out withdrawAmount);
 
             int userChoiceAccount = SelectAccount(userIndex); //menu options with accounts' type
             int goBackOption = GetGoBackOption(userIndex); //go back option
@@ -537,8 +551,8 @@ namespace BankProject
                     Write("\n\tType Amount ======> ");
                     ResetColor();
                     string? transfer = Console.ReadLine();
-                    float transferAmount;
-                    float.TryParse(transfer, out transferAmount);
+                    double transferAmount;
+                    double.TryParse(transfer, out transferAmount);
 
                     if (transferAmount <= 0)
                     {
@@ -766,8 +780,8 @@ namespace BankProject
             //calling method from a class and setting variables
             Clear();
             Console.Write("\n\tHow much SEK do you want to Convert: ");
-            float currencyAmount;
-            float.TryParse(Console.ReadLine(), out currencyAmount);
+            double currencyAmount;
+            double.TryParse(Console.ReadLine(), out currencyAmount);
             ConvertToDollar convertToDollar = new ConvertToDollar(currencyAmount);
             Console.WriteLine(convertToDollar.PrintCurrencyConverter(currencyAmount));
         }
@@ -777,8 +791,8 @@ namespace BankProject
             //calling method from a class and setting variables
             Clear();
             Console.Write("\n\tHow much SEK do you want to Convert: ");
-            float currencyAmount;
-            float.TryParse(Console.ReadLine(), out currencyAmount);
+            double currencyAmount;
+            double.TryParse(Console.ReadLine(), out currencyAmount);
             ConvertToEuro convertToEuro = new ConvertToEuro(currencyAmount);
             Console.WriteLine(convertToEuro.PrintCurrencyConverter(currencyAmount));
         }

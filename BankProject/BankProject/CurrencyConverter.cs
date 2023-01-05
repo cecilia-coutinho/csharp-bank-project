@@ -11,21 +11,21 @@ namespace BankProject
 {
     internal class CurrencyConverter
     {
-        public float ConvertionRate { get; set; }
-        public float CurrencyAmount { get; set; }
+        public double ConvertionRate { get; set; }
+        public double CurrencyAmount { get; set; }
 
-        public CurrencyConverter(float currencyAmount)
+        public CurrencyConverter(double currencyAmount)
         {
             this.CurrencyAmount = currencyAmount;
         }
 
-        protected float CurrencyConverterCalculator(float currencyAmount)
+        protected double CurrencyConverterCalculator(double currencyAmount)
         {
             return currencyAmount / ConvertionRate;
 
         }
 
-        public virtual string PrintCurrencyConverter(float currencyAmount)
+        public virtual string PrintCurrencyConverter(double currencyAmount)
         {
             return $"\n\tExchange Rate:{ConvertionRate}\n\texchanged value: {CurrencyConverterCalculator(currencyAmount)}";
         }

@@ -28,9 +28,9 @@ namespace BankProject
         //bank account needs a float(account value) and a string(account type)
 
         public string AccountType { get; set; } = string.Empty;
-        public float Balance { get; set; }
+        public double Balance { get; set; }
 
-        public BankAccount(string accountType, float balance)
+        public BankAccount(string accountType, double balance)
         {
             AccountType = accountType;
             Balance = balance;
