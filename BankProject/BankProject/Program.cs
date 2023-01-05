@@ -169,7 +169,7 @@ namespace BankProject
                 sheet.Cell(startRow, 2).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
                 AddAllBorders(sheet.Cell(startRow, 2));
 
-                //add bankAccount Data (balance of each account type)
+                // add bankAccount Data (balance of each account type)
                 for (int j = 0; j < bankUsers[i].BankAccounts.Count; j++)
                 {
                     string accountType = bankUsers[i].BankAccounts[j].AccountType;
@@ -177,13 +177,15 @@ namespace BankProject
 
                     if (accountType.Contains("Savings"))
                     {
-                        sheet.Cell((startRow), 3).Value = balance;
+                        //convert balance in 2-digits for currency type
+                        sheet.Cell((startRow), 3).Value = balance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"));
                         sheet.Cell(startRow, 3).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
                         AddAllBorders(sheet.Cell(startRow, 3));
                     }
                     if (accountType.Contains("Salary"))
                     {
-                        sheet.Cell((startRow), 4).Value = balance;
+                        //convert balance in 2-digits for currency type
+                        sheet.Cell((startRow), 4).Value = balance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"));
                         sheet.Cell(startRow, 4).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
                         AddAllBorders(sheet.Cell(startRow, 4));
                     }
@@ -249,7 +251,8 @@ namespace BankProject
                         bool hasSavings = sheet.Cell(rowIndex, columnIndex).ValueAsString.Length > 0;
                         if (hasSavings)
                         {
-                            float savingsBalance = (float)sheet.Cell(rowIndex, columnIndex).ValueAsDouble;
+                            float savingsBalance;
+                            float.TryParse(sheet.Cell(rowIndex, columnIndex).ToString(), out savingsBalance);
                             bankUsers[rowIndex - 1].BankAccounts.Add(new BankAccount("Savings", savingsBalance));
                         }
                     }
@@ -258,7 +261,8 @@ namespace BankProject
                         bool hasSalary = sheet.Cell(rowIndex, columnIndex).ValueAsString.Length > 0;
                         if (hasSalary)
                         {
-                            float salaryBalance = (float)sheet.Cell(rowIndex, columnIndex).ValueAsDouble;
+                            float salaryBalance;
+                            float.TryParse(sheet.Cell(rowIndex, columnIndex).ToString(), out salaryBalance);
                             bankUsers[rowIndex - 1].BankAccounts.Add(new BankAccount("Salary", salaryBalance));
                         }
                     }
@@ -409,10 +413,12 @@ namespace BankProject
             //to get user and bank account
             for (int i = 0; i < bankUsers[userIndex].BankAccounts.Count; i++)
             {
-                ///show balance accounts and types
+                ///get balance accounts and types
                 var accountBalance = bankUsers[userIndex].BankAccounts[i].Balance;
                 var accountType = bankUsers[userIndex].BankAccounts[i].AccountType;
 
+                //show balance accounts and types
+                //print balance in 2-digits for currency type
                 Console.WriteLine($"\n\t{accountType}: {accountBalance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n");
 
             }
@@ -422,7 +428,10 @@ namespace BankProject
         {
             //to make a deposit
             Clear();
-            Console.Write("\n\tHow much $$ do you want to deposit? ");
+            Console.WriteLine("\n\tHow much $$ do you want to deposit?\n");
+            WriteLine("\n\tPlease, type enter in 2-digit format, ex: 00,00\n" +
+                "\n\t****Note: if you enter more than 2 digits it will be converted to 2 digits****\n");
+            Write("\n\tType Amount ======> ");
             string? deposit = Console.ReadLine();
             float depositAmount;
             float.TryParse(deposit, out depositAmount);
@@ -449,7 +458,11 @@ namespace BankProject
         {
             //to withdraw money
             Clear();
-            Console.Write("How much $$ do you want to withdraw? ");
+            Console.WriteLine("\n\tHow much $$ do you want to withdraw?");
+            WriteLine("\n\tPlease, type enter in 2-digit format, ex: 00,00\n" +
+                "\n\t****Note: if you enter more than 2 digits it will be converted to 2 digits****\n");
+            Write("\n\tType Amount ======> ");
+
             string? withdraw = Console.ReadLine();
             float withdrawAmount;
             float.TryParse(withdraw, out withdrawAmount);
@@ -499,15 +512,15 @@ namespace BankProject
 
             if (accountTargetFound)
             {
-                Clear();
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine($"\n\tselect type of account to transfer from:\n");
                 Console.ResetColor();
 
                 int userChoiceAccount = SelectAccount(userIndex); //options with account types
                 //int goBackOption = GetGoBackOption(userIndex);
-
+                ForegroundColor = ConsoleColor.Yellow;
                 Console.WriteLine($"\n\tselect type of account to transfer to:\n");
+                ResetColor();
 
                 int targetUserChoiceAccount = SelectAccount(targetUserIndex); //options with target account types
 
@@ -516,10 +529,14 @@ namespace BankProject
                 if (!invalidUserChoiceAccount)
                 {
                     //if exists
+                    Clear();
                     ForegroundColor = ConsoleColor.Green;
-                    Console.Write("\n\tHow much $$ do you want to transfer? ");
-                    string? transfer = Console.ReadLine();
+                    Console.WriteLine("\n\tHow much $$ do you want to transfer?");
+                    WriteLine("\n\tPlease, type enter in 2-digit format, ex: 00,00\n" +
+                        "\n\t****Note: if you enter more than 2 digits it will be converted to 2 digits****\n");
+                    Write("\n\tType Amount ======> ");
                     ResetColor();
+                    string? transfer = Console.ReadLine();
                     float transferAmount;
                     float.TryParse(transfer, out transferAmount);
 
@@ -584,11 +601,10 @@ namespace BankProject
                 //    var targetAccountType = bankUsers[targetUserIndex].BankAccounts[i].AccountType;
 
                 //    Console.WriteLine($"\n\tHi {bankUsers[userIndex].User.ToUpper()}!\n");
-                //    Console.WriteLine($"\n\lockCounter{accountType}: {accountBalance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n");
+                //    Console.WriteLine($"\n\t{accountType}: {accountBalance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n");
 
-                //    Console.WriteLine($"\n\tHi {bankUsers[targetUserIndex].User.ToUpper()}!\n");
-                //    Console.WriteLine($"\n\lockCounter{targetAccountType}: {targetAccountBalance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n");
-
+                //    Console.WriteLine($"\n\t{bankUsers[targetUserIndex].User.ToUpper()} Balance:\n");
+                //    Console.WriteLine($"\n\t{targetAccountType}: {targetAccountBalance.ToString("c2", CultureInfo.CreateSpecificCulture("sv-SE"))}\n");
                 //}
             }
             else
