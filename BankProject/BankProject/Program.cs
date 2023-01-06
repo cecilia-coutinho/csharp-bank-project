@@ -180,7 +180,7 @@ namespace BankProject
                     {
                         // convert balance in 2-digits
                         double twoDigitsBalance;
-                        double.TryParse(String.Format("{0:0.00}", balance), out twoDigitsBalance);
+                        double.TryParse(String.Format("{0:0.00}", balance, CultureInfo.InvariantCulture), out twoDigitsBalance);
                         sheet.Cell((startRow), 3).Value = twoDigitsBalance;
 
                         sheet.Cell(startRow, 3).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
@@ -190,7 +190,7 @@ namespace BankProject
                     {
                         // convert balance in 2-digits
                         double twoDigitsBalance;
-                        double.TryParse(String.Format("{0:0.00}", balance), out twoDigitsBalance);
+                        double.TryParse(String.Format("{0:0.00}", balance, CultureInfo.InvariantCulture), out twoDigitsBalance);
                         sheet.Cell((startRow), 4).Value = twoDigitsBalance;
                         sheet.Cell(startRow, 4).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
                         AddAllBorders(sheet.Cell(startRow, 4));
