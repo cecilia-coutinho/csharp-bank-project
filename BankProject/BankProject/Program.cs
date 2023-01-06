@@ -443,7 +443,11 @@ namespace BankProject
 
             if (decimalPointIndex == -1)
             {
-                double depositAmount = double.Parse(deposit, CultureInfo.CreateSpecificCulture("sv-SE"));
+                double depositAmount = 0;
+                if (deposit != null)
+                {
+                    depositAmount = double.Parse(deposit, CultureInfo.CreateSpecificCulture("sv-SE"));
+                }
 
                 int userChoiceAccount = SelectAccount(userIndex); //to select type of account to make deposit
                 int goBackOption = GetGoBackOption(userIndex); //option to go back
@@ -583,7 +587,11 @@ namespace BankProject
 
                     if (decimalPointIndex == -1)
                     {
-                        double transferAmount = double.Parse(transfer, CultureInfo.CreateSpecificCulture("sv-SE"));
+                        double transferAmount = 0;
+                        if (transfer != null)
+                        {
+                            transferAmount = double.Parse(transfer, CultureInfo.CreateSpecificCulture("sv-SE"));
+                        }
 
                         if (transferAmount <= 0)
                         {
