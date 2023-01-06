@@ -180,7 +180,7 @@ namespace BankProject
                     {
                         // convert balance in 2-digits
                         double twoDigitsBalance;
-                        double.TryParse(String.Format("{0:0.00}", balance, CultureInfo.InvariantCulture), out twoDigitsBalance);
+                        double.TryParse(String.Format("{0:0.00}", balance), out twoDigitsBalance);
                         sheet.Cell((startRow), 3).Value = twoDigitsBalance;
 
                         sheet.Cell(startRow, 3).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
@@ -190,7 +190,7 @@ namespace BankProject
                     {
                         // convert balance in 2-digits
                         double twoDigitsBalance;
-                        double.TryParse(String.Format("{0:0.00}", balance, CultureInfo.InvariantCulture), out twoDigitsBalance);
+                        double.TryParse(String.Format("{0:0.00}", balance), out twoDigitsBalance);
                         sheet.Cell((startRow), 4).Value = twoDigitsBalance;
                         sheet.Cell(startRow, 4).AlignmentHorizontal = Bytescout.Spreadsheet.Constants.AlignmentHorizontal.Right;
                         AddAllBorders(sheet.Cell(startRow, 4));
@@ -443,8 +443,7 @@ namespace BankProject
 
             if (decimalPointIndex == -1)
             {
-                double depositAmount;
-                double.TryParse(deposit, out depositAmount);
+                double depositAmount = double.Parse(deposit, CultureInfo.CreateSpecificCulture("sv-SE"));
 
                 int userChoiceAccount = SelectAccount(userIndex); //to select type of account to make deposit
                 int goBackOption = GetGoBackOption(userIndex); //option to go back
@@ -511,7 +510,7 @@ namespace BankProject
                     Console.Write("\n\tENTER your Password: \n\t");
                     string? password = Console.ReadLine(); //get pass to confirm transaction
 
-                    //check pass
+                    // check pass
                     if (bankUsers[userIndex].Password == password)
                     {
                         //to add the amount in the acount
@@ -584,8 +583,7 @@ namespace BankProject
 
                     if (decimalPointIndex == -1)
                     {
-                        double transferAmount;
-                        double.TryParse(transfer, out transferAmount);
+                        double transferAmount = double.Parse(transfer, CultureInfo.CreateSpecificCulture("sv-SE"));
 
                         if (transferAmount <= 0)
                         {
