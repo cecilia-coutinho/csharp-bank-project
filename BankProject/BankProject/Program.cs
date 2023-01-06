@@ -1,14 +1,7 @@
 ﻿using Bytescout.Spreadsheet;
 using System.Drawing;
-using System.Diagnostics;
 using System.Globalization;
-using System.IO;
-using System.IO.Enumeration;
 using static System.Console; //to simplify Console references
-using System.Reflection.Metadata;
-using System.Security.Cryptography;
-using System.CodeDom;
-using System.Reflection.Metadata.Ecma335;
 
 namespace BankProject
 {
