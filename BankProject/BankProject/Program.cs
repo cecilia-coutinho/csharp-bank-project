@@ -1,6 +1,7 @@
 ﻿using Bytescout.Spreadsheet;
 using System.Drawing;
 using System.Globalization;
+using System.Security;
 using System.Speech.Synthesis.TtsEngine;
 using static System.Console; //to simplify Console references
 
@@ -277,6 +278,33 @@ namespace BankProject
             }
             document.Dispose();
         }
+
+        private static SecureString MaskInputString()
+        {
+            Console.WriteLine("\n\tPassword: \n\t");
+            SecureString password = new SecureString();
+            ConsoleKeyInfo keyInfo;
+
+            do
+            {
+                keyInfo = Console.ReadKey(true);
+                if (!char.IsControl(keyInfo.KeyChar))
+                {
+                    password.AppendChar(keyInfo.KeyChar);
+                    Console.Write("*");
+                }
+                else if (keyInfo.Key == ConsoleKey.Backspace && password.Length > 0)
+                {
+                    password.RemoveAt(password.Length - 1);
+                    Console.Write("\b \b");
+                }
+            }
+            while (keyInfo.Key != ConsoleKey.Enter);
+            {
+                return password;
+            }
+
+        }
         static void CheckPassAndRunAccount(string? user, int userIndex)
         {
             // to check password before run menu
@@ -289,8 +317,8 @@ namespace BankProject
                 Clear();
 
                 PrintWelcome();
-                Console.Write("\n\tPassword: \n\t");
-                string? password = Console.ReadLine(); //password input
+                SecureString pass = MaskInputString();
+                string password = new System.Net.NetworkCredential(string.Empty, pass).Password;
 
                 //check if password is correct. if so, run menu options
                 if (bankUsers[userIndex].Password == password)
@@ -301,7 +329,6 @@ namespace BankProject
                 else
                 {
                     //max attempts failed password
-
                     //user can try again if failed attempts are less than 3
                     if (countPassAttempts < maxInvalidPassAttempts)
                     {
