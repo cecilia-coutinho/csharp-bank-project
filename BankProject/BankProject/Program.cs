@@ -288,11 +288,13 @@ namespace BankProject
             do
             {
                 keyInfo = Console.ReadKey(true);
+                //to show each char as an "*"
                 if (!char.IsControl(keyInfo.KeyChar))
                 {
                     password.AppendChar(keyInfo.KeyChar);
                     Console.Write("*");
                 }
+                //to remove when backspacing
                 else if (keyInfo.Key == ConsoleKey.Backspace && password.Length > 0)
                 {
                     password.RemoveAt(password.Length - 1);
