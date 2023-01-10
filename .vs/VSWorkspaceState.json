@@ -2,7 +2,9 @@
   "ExpandedNodes": [
     "",
     "\\BankProject",
-    "\\BankProject\\BankProject"
+    "\\BankProject\\BankProject",
+    "\\BankProject\\BankProject\\bin"
   ],
+  "SelectedNode": "\\BankProject\\BankProject\\bin\\Debug",
   "PreviewInSolutionExplorer": false
 }

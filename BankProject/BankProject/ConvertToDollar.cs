@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Globalization;
 
 namespace BankProject
 {
@@ -18,7 +13,7 @@ namespace BankProject
 
         public override string PrintCurrencyConverter(double currencyAmount)
         {
-            return $"\n\tExchange Rate: {ConvertionRateDollar}\n\tExchange Value USS:{CurrencyConverterCalculator(currencyAmount).ToString("c2", CultureInfo.CreateSpecificCulture("en-us"))}";
+            return $"\n\tExchange Rate: {ConvertionRateDollar}\n\tExchange Value in USS:{CurrencyConverterCalculator(currencyAmount).ToString("c2", CultureInfo.CreateSpecificCulture("en-us"))}";
         }
     }
 }
